@@ -1,6 +1,8 @@
 -- ═══════════════════════════════════════════════════════════
--- PropNest — FULL SETUP (run once on a fresh Supabase project)
+-- PropNest — FULL SETUP (idempotent; safe to re-run)
 -- Order: schema -> seed -> seed_part2 -> seed_payments -> invariants -> indexes
+-- NOTE: payments seed is NOT idempotent — for a clean DB run once,
+-- or drop schema first (see supabase/README.md).
 -- ═══════════════════════════════════════════════════════════
 
 
@@ -285,27 +287,33 @@ returns uuid as $$
 $$ language sql security definer stable;
 
 -- ── PROPERTIES ──
+drop policy if exists "Admin full access to properties" on properties;
 create policy "Admin full access to properties" on properties
   for all using (is_admin());
 
+drop policy if exists "Manager can read own property" on properties;
 create policy "Manager can read own property" on properties
   for select using (
     is_admin() or id = my_property_id()
   );
 
 -- ── ROOMS ──
+drop policy if exists "Admin full access to rooms" on rooms;
 create policy "Admin full access to rooms" on rooms
   for all using (is_admin());
 
+drop policy if exists "Manager can read own property rooms" on rooms;
 create policy "Manager can read own property rooms" on rooms
   for select using (
     is_admin() or property_id = my_property_id()
   );
 
 -- ── STUDENTS ──
+drop policy if exists "Admin full access to students" on students;
 create policy "Admin full access to students" on students
   for all using (is_admin());
 
+drop policy if exists "Manager can read students in own property" on students;
 create policy "Manager can read students in own property" on students
   for select using (
     is_admin() or
@@ -315,9 +323,11 @@ create policy "Manager can read students in own property" on students
   );
 
 -- ── PAYMENTS ──
+drop policy if exists "Admin full access to payments" on payments;
 create policy "Admin full access to payments" on payments
   for all using (is_admin());
 
+drop policy if exists "Manager can read payments in own property" on payments;
 create policy "Manager can read payments in own property" on payments
   for select using (
     is_admin() or
@@ -328,6 +338,7 @@ create policy "Manager can read payments in own property" on payments
     )
   );
 
+drop policy if exists "Manager can insert payments" on payments;
 create policy "Manager can insert payments" on payments
   for insert with check (
     is_admin() or
@@ -339,9 +350,11 @@ create policy "Manager can insert payments" on payments
   );
 
 -- ── MONTHLY OBLIGATIONS ──
+drop policy if exists "Admin full access to obligations" on monthly_obligations;
 create policy "Admin full access to obligations" on monthly_obligations
   for all using (is_admin());
 
+drop policy if exists "Manager can read own property obligations" on monthly_obligations;
 create policy "Manager can read own property obligations" on monthly_obligations
   for select using (
     is_admin() or
@@ -353,9 +366,11 @@ create policy "Manager can read own property obligations" on monthly_obligations
   );
 
 -- ── STUDENT TRANSFERS ──
+drop policy if exists "Admin full access to transfers" on student_transfers;
 create policy "Admin full access to transfers" on student_transfers
   for all using (is_admin());
 
+drop policy if exists "Manager can read own property transfers" on student_transfers;
 create policy "Manager can read own property transfers" on student_transfers
   for select using (
     is_admin() or
@@ -367,9 +382,11 @@ create policy "Manager can read own property transfers" on student_transfers
   );
 
 -- ── PROFILES ──
+drop policy if exists "Users can read own profile" on profiles;
 create policy "Users can read own profile" on profiles
   for select using (id = auth.uid() or is_admin());
 
+drop policy if exists "Admin can manage all profiles" on profiles;
 create policy "Admin can manage all profiles" on profiles
   for all using (is_admin());
 
@@ -411,7 +428,8 @@ INSERT INTO properties (id, name, location, color_accent) VALUES
   ('a1000000-0000-0000-0000-000000000001', 'Maple Court',    'Riverside', '#22D3EE'),
   ('a1000000-0000-0000-0000-000000000002', 'Oakwood',        'Riverside', '#A78BFA'),
   ('a1000000-0000-0000-0000-000000000003', 'Birchgate',      'Riverside', '#F59E0B'),
-  ('a1000000-0000-0000-0000-000000000004', 'Cedar House',    'Riverside', '#FB7185');
+  ('a1000000-0000-0000-0000-000000000004', 'Cedar House',    'Riverside', '#FB7185')
+ON CONFLICT (id) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════
 -- MAPLE COURT ROOMS
@@ -437,7 +455,8 @@ INSERT INTO rooms (id, property_id, room_number, bed_capacity, rent_per_bed, not
   ('b1000000-0001-0000-0000-000000000018','a1000000-0000-0000-0000-000000000001','Room 18',5,110.00,NULL),
   ('b1000000-0001-0000-0000-000000000019','a1000000-0000-0000-0000-000000000001','Room 19',1,300.00,NULL),
   ('b1000000-0001-0000-0000-000000000020','a1000000-0000-0000-0000-000000000001','Room 20',1,360.00,NULL),
-  ('b1000000-0001-0000-0000-000000000021','a1000000-0000-0000-0000-000000000001','Room 21',1,180.00,NULL);
+  ('b1000000-0001-0000-0000-000000000021','a1000000-0000-0000-0000-000000000001','Room 21',1,180.00,NULL)
+ON CONFLICT (id) DO NOTHING;
 
 -- ── MAPLE COURT STUDENTS ──
 INSERT INTO students (id, full_name, room_id, check_in_date, status, notes, data_flags) VALUES
@@ -512,7 +531,8 @@ INSERT INTO students (id, full_name, room_id, check_in_date, status, notes, data
   -- Room 20
   ('c1000001-0000-0000-0000-000000000050','Robert Maposa','b1000000-0001-0000-0000-000000000020',NULL,'ACTIVE','Balance $180',NULL),
   -- Room 21
-  ('c1000001-0000-0000-0000-000000000051','Kelly Chuma','b1000000-0001-0000-0000-000000000021',NULL,'ACTIVE',NULL,NULL);
+  ('c1000001-0000-0000-0000-000000000051','Kelly Chuma','b1000000-0001-0000-0000-000000000021',NULL,'ACTIVE',NULL,NULL)
+ON CONFLICT (id) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════
 -- OAKWOOD ROOMS
@@ -530,7 +550,8 @@ INSERT INTO rooms (id, property_id, room_number, bed_capacity, rent_per_bed, not
   ('b1000000-0002-0000-0000-000000000010','a1000000-0000-0000-0000-000000000002','Room 10',2,130.00,NULL),
   ('b1000000-0002-0000-0000-000000000011','a1000000-0000-0000-0000-000000000002','Room 11',3,120.00,NULL),
   ('b1000000-0002-0000-0000-000000000012','a1000000-0000-0000-0000-000000000002','Room 12',3,120.00,NULL),
-  ('b1000000-0002-0000-0000-000000000013','a1000000-0000-0000-0000-000000000002','Room 13',1,150.00,NULL);
+  ('b1000000-0002-0000-0000-000000000013','a1000000-0000-0000-0000-000000000002','Room 13',1,150.00,NULL)
+ON CONFLICT (id) DO NOTHING;
 
 -- ── OAKWOOD STUDENTS ──
 INSERT INTO students (id, full_name, room_id, check_in_date, status, notes, data_flags) VALUES
@@ -563,7 +584,8 @@ INSERT INTO students (id, full_name, room_id, check_in_date, status, notes, data
   ('c1000002-0000-0000-0000-000000000027','Natalie Kemp','b1000000-0002-0000-0000-000000000012',NULL,'ACTIVE',NULL,NULL),
   ('c1000002-0000-0000-0000-000000000028','Leona Zhou','b1000000-0002-0000-0000-000000000012',NULL,'ACTIVE',NULL,NULL),
   ('c1000002-0000-0000-0000-000000000029','Natasha Jordan','b1000000-0002-0000-0000-000000000012',NULL,'ACTIVE',NULL,NULL),
-  ('c1000002-0000-0000-0000-000000000030','Judith Katsande','b1000000-0002-0000-0000-000000000013',NULL,'ACTIVE',NULL,NULL);
+  ('c1000002-0000-0000-0000-000000000030','Judith Katsande','b1000000-0002-0000-0000-000000000013',NULL,'ACTIVE',NULL,NULL)
+ON CONFLICT (id) DO NOTHING;
 
 
 -- ▼▼▼ seed_part2.sql ▼▼▼
@@ -593,7 +615,8 @@ INSERT INTO rooms (id, property_id, room_number, bed_capacity, rent_per_bed, not
   ('b1000000-0003-0000-0000-000000000015','a1000000-0000-0000-0000-000000000003','Room 15',2,130.00,NULL),
   ('b1000000-0003-0000-0000-000000000016','a1000000-0000-0000-0000-000000000003','Room 16',3,130.00,NULL),
   ('b1000000-0003-0000-0000-000000000017','a1000000-0000-0000-0000-000000000003','Room 17',3,130.00,'Incomplete: two students with no payment amount'),
-  ('b1000000-0003-0000-0000-000000000018','a1000000-0000-0000-0000-000000000003','Room 18',2,150.00,NULL);
+  ('b1000000-0003-0000-0000-000000000018','a1000000-0000-0000-0000-000000000003','Room 18',2,150.00,NULL)
+ON CONFLICT (id) DO NOTHING;
 
 -- ── BIRCHGATE STUDENTS ──
 INSERT INTO students (id, full_name, room_id, check_in_date, status, notes, data_flags) VALUES
@@ -656,7 +679,8 @@ INSERT INTO students (id, full_name, room_id, check_in_date, status, notes, data
   ('c1000003-0000-0000-0000-000000000041','Tamara Marisa','b1000000-0003-0000-0000-000000000017',NULL,'ACTIVE',NULL,NULL),
   -- Room 18
   ('c1000003-0000-0000-0000-000000000042','Tafadzwa Chuma','b1000000-0003-0000-0000-000000000018',NULL,'ACTIVE',NULL,NULL),
-  ('c1000003-0000-0000-0000-000000000043','Tina Matizi','b1000000-0003-0000-0000-000000000018',NULL,'ACTIVE',NULL,NULL);
+  ('c1000003-0000-0000-0000-000000000043','Tina Matizi','b1000000-0003-0000-0000-000000000018',NULL,'ACTIVE',NULL,NULL)
+ON CONFLICT (id) DO NOTHING;
 
 -- ═══════════════════════════════════════════════════════════
 -- CEDAR HOUSE ROOMS
@@ -668,7 +692,8 @@ INSERT INTO rooms (id, property_id, room_number, bed_capacity, rent_per_bed, not
   ('b1000000-0004-0000-0000-000000000004','a1000000-0000-0000-0000-000000000004','Room 4',2,150.00,NULL),
   ('b1000000-0004-0000-0000-000000000005','a1000000-0000-0000-0000-000000000004','Room 5',3,130.00,NULL),
   ('b1000000-0004-0000-0000-000000000006','a1000000-0000-0000-0000-000000000004','Room 6',2,160.00,NULL),
-  ('b1000000-0004-0000-0000-000000000007','a1000000-0000-0000-0000-000000000004','Room 7',4,110.00,NULL);
+  ('b1000000-0004-0000-0000-000000000007','a1000000-0000-0000-0000-000000000004','Room 7',4,110.00,NULL)
+ON CONFLICT (id) DO NOTHING;
 
 -- ── CEDAR HOUSE STUDENTS ──
 INSERT INTO students (id, full_name, room_id, check_in_date, status, notes, data_flags) VALUES
@@ -697,7 +722,8 @@ INSERT INTO students (id, full_name, room_id, check_in_date, status, notes, data
   ('c1000004-0000-0000-0000-000000000016','Thandi Ndebele','b1000000-0004-0000-0000-000000000007',NULL,'ACTIVE',NULL,NULL),
   ('c1000004-0000-0000-0000-000000000017','Elaine Zindi','b1000000-0004-0000-0000-000000000007',NULL,'ACTIVE',NULL,NULL),
   ('c1000004-0000-0000-0000-000000000018','Marcus Nyoni','b1000000-0004-0000-0000-000000000007',NULL,'ACTIVE',NULL,NULL),
-  ('c1000004-0000-0000-0000-000000000019','Nerissa Zindi','b1000000-0004-0000-0000-000000000007',NULL,'ACTIVE',NULL,NULL);
+  ('c1000004-0000-0000-0000-000000000019','Nerissa Zindi','b1000000-0004-0000-0000-000000000007',NULL,'ACTIVE',NULL,NULL)
+ON CONFLICT (id) DO NOTHING;
 
 
 -- ▼▼▼ seed_payments.sql ▼▼▼

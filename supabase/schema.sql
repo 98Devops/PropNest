@@ -278,27 +278,33 @@ returns uuid as $$
 $$ language sql security definer stable;
 
 -- ── PROPERTIES ──
+drop policy if exists "Admin full access to properties" on properties;
 create policy "Admin full access to properties" on properties
   for all using (is_admin());
 
+drop policy if exists "Manager can read own property" on properties;
 create policy "Manager can read own property" on properties
   for select using (
     is_admin() or id = my_property_id()
   );
 
 -- ── ROOMS ──
+drop policy if exists "Admin full access to rooms" on rooms;
 create policy "Admin full access to rooms" on rooms
   for all using (is_admin());
 
+drop policy if exists "Manager can read own property rooms" on rooms;
 create policy "Manager can read own property rooms" on rooms
   for select using (
     is_admin() or property_id = my_property_id()
   );
 
 -- ── STUDENTS ──
+drop policy if exists "Admin full access to students" on students;
 create policy "Admin full access to students" on students
   for all using (is_admin());
 
+drop policy if exists "Manager can read students in own property" on students;
 create policy "Manager can read students in own property" on students
   for select using (
     is_admin() or
@@ -308,9 +314,11 @@ create policy "Manager can read students in own property" on students
   );
 
 -- ── PAYMENTS ──
+drop policy if exists "Admin full access to payments" on payments;
 create policy "Admin full access to payments" on payments
   for all using (is_admin());
 
+drop policy if exists "Manager can read payments in own property" on payments;
 create policy "Manager can read payments in own property" on payments
   for select using (
     is_admin() or
@@ -321,6 +329,7 @@ create policy "Manager can read payments in own property" on payments
     )
   );
 
+drop policy if exists "Manager can insert payments" on payments;
 create policy "Manager can insert payments" on payments
   for insert with check (
     is_admin() or
@@ -332,9 +341,11 @@ create policy "Manager can insert payments" on payments
   );
 
 -- ── MONTHLY OBLIGATIONS ──
+drop policy if exists "Admin full access to obligations" on monthly_obligations;
 create policy "Admin full access to obligations" on monthly_obligations
   for all using (is_admin());
 
+drop policy if exists "Manager can read own property obligations" on monthly_obligations;
 create policy "Manager can read own property obligations" on monthly_obligations
   for select using (
     is_admin() or
@@ -346,9 +357,11 @@ create policy "Manager can read own property obligations" on monthly_obligations
   );
 
 -- ── STUDENT TRANSFERS ──
+drop policy if exists "Admin full access to transfers" on student_transfers;
 create policy "Admin full access to transfers" on student_transfers
   for all using (is_admin());
 
+drop policy if exists "Manager can read own property transfers" on student_transfers;
 create policy "Manager can read own property transfers" on student_transfers
   for select using (
     is_admin() or
@@ -360,9 +373,11 @@ create policy "Manager can read own property transfers" on student_transfers
   );
 
 -- ── PROFILES ──
+drop policy if exists "Users can read own profile" on profiles;
 create policy "Users can read own profile" on profiles
   for select using (id = auth.uid() or is_admin());
 
+drop policy if exists "Admin can manage all profiles" on profiles;
 create policy "Admin can manage all profiles" on profiles
   for all using (is_admin());
 
