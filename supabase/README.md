@@ -11,6 +11,7 @@ run these files in the Supabase SQL editor **in order**:
 | 4 | `seed_payments.sql` | Demo payment ledger (drives the coverage engine) |
 | 5 | `R3_coverage_invariants.sql` | `CHECK (coverage_start <= coverage_end)` backstop |
 | 6 | `R6_performance_indexes.sql` | Hot-path indexes (payments by occupant+date, etc.) |
+| 7 | `R7_parity_objects.sql` | settings/report_logs/monthly_snapshots tables, rooms.is_active, balance-recalc functions (objects the app calls) |
 
 The demo data uses **generated English names** — no real tenant data ships in
 this repo. All occupant rows share the same UUIDs across the seed files, so
