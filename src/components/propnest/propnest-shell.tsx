@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { AppShell } from "@/components/app-shell";
 import { NavProvider, useNav, type ScreenKey } from "@/lib/propnest-nav";
 import { PropNestDashboard } from "./propnest-dashboard";
+import { Properties } from "./properties";
 import { Button } from "@/components/ui/button";
 import { ConstructionIcon } from "lucide-react";
 
@@ -25,6 +26,7 @@ function ScreenSwitcher() {
   }, [setScreen]);
 
   if (screen === "dashboard") return <PropNestDashboard />;
+  if (screen === "properties") return <Properties />;
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center">

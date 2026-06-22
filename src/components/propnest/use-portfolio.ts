@@ -3,6 +3,10 @@ import { useMemo } from "react";
 import { useData } from "@/parts/p1_imports_context.jsx";
 // @ts-expect-error - JS helper
 import { buildProps } from "@/parts/p2_helpers.jsx";
+// @ts-expect-error - JS module
+import { useCoverageStore } from "@/hooks/useCoverageStore.js";
+// @ts-expect-error - JS module
+import { isConfigured } from "@/lib/supabase";
 
 export type PortfolioRow = {
   id: string;
@@ -135,4 +139,17 @@ export function usePortfolio() {
   }, [properties]);
 
   return { properties, totals, recentPayments, attention, loading };
+}
+
+/**
+ * Coverage map shared with PropertyDetail / RoomRow — wraps useCoverageStore
+ * so the rest of the UI doesn't import engine modules directly.
+ */
+export function usePortfolioCoverage() {
+  const store = useCoverageStore(isConfigured) as {
+    coverageMap: Map<string, { status: string; daysRemaining?: number; daysOverdue?: number; coverageEnd?: string }>;
+    loading: boolean;
+    refresh: () => void;
+  };
+  return store;
 }

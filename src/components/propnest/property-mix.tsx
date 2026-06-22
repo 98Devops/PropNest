@@ -7,9 +7,11 @@ import {
 import { DashboardCard } from "@/components/dashboard-card";
 import { usePortfolio } from "./use-portfolio";
 import { moneyCompact } from "./fmt";
+import { useNav } from "@/lib/propnest-nav";
 
 export function PropertyMix() {
   const { properties } = usePortfolio();
+  const { openProperty } = useNav();
 
   const max = Math.max(1, ...properties.map((p) => p.expected));
 
@@ -28,7 +30,12 @@ export function PropertyMix() {
           const pct = p.expected > 0 ? Math.round((p.collected / p.expected) * 100) : 0;
           const widthPct = Math.round((p.expected / max) * 100);
           return (
-            <div key={p.id} className="space-y-1.5">
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => openProperty(p.id)}
+              className="block w-full space-y-1.5 rounded-md p-1 -m-1 text-left transition-colors hover:bg-muted/50"
+            >
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-foreground">{p.name}</span>
                 <span className="tabular-nums text-muted-foreground">
@@ -42,7 +49,7 @@ export function PropertyMix() {
                   style={{ width: `${pct}%` }}
                 />
               </div>
-            </div>
+            </button>
           );
         })}
       </CardContent>
