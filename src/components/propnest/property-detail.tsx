@@ -117,7 +117,7 @@ export function PropertyDetail({
 function ProgressLine({
   label, pct, sub, tone,
 }: { label: string; pct: number; sub: string; tone: "primary" | "success" }) {
-  const bar = tone === "success" ? "bg-emerald-500" : "bg-primary";
+  const bar = tone === "success" ? "bg-emerald-500" : "bg-brand-gradient";
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-xs">

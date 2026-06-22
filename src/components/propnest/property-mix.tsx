@@ -1,10 +1,4 @@
-import {
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { DashboardCard } from "@/components/dashboard-card";
+import { Panel } from "./panel";
 import { usePortfolio } from "./use-portfolio";
 import { moneyCompact } from "./fmt";
 import { useNav } from "@/lib/propnest-nav";
@@ -12,16 +6,15 @@ import { useNav } from "@/lib/propnest-nav";
 export function PropertyMix() {
   const { properties } = usePortfolio();
   const { openProperty } = useNav();
-
   const max = Math.max(1, ...properties.map((p) => p.expected));
 
   return (
-    <DashboardCard className="gap-0 md:col-span-2">
-      <CardHeader className="border-b">
-        <CardTitle className="text-base">Collection by property</CardTitle>
-        <CardDescription>Collected vs. expected for the current month.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4 py-6">
+    <Panel className="md:col-span-2">
+      <header className="border-b px-5 py-4">
+        <h3 className="text-base font-semibold text-foreground">Collection by property</h3>
+        <p className="text-xs text-muted-foreground">Collected vs. expected for the current month.</p>
+      </header>
+      <div className="space-y-4 px-5 py-5">
         {properties.length === 0 ? (
           <div className="flex h-24 items-center justify-center text-sm text-muted-foreground">
             No properties yet.
@@ -34,25 +27,22 @@ export function PropertyMix() {
               key={p.id}
               type="button"
               onClick={() => openProperty(p.id)}
-              className="block w-full space-y-1.5 rounded-md p-1 -m-1 text-left transition-colors hover:bg-muted/50"
+              className="-m-1 block w-full space-y-1.5 rounded-md p-1 text-left transition-colors hover:bg-muted/50"
             >
               <div className="flex items-center justify-between text-xs">
                 <span className="font-medium text-foreground">{p.name}</span>
                 <span className="tabular-nums text-muted-foreground">
                   {moneyCompact(p.collected)} <span className="text-muted-foreground/60">/ {moneyCompact(p.expected)}</span>
-                  <span className="ms-2 text-foreground/80">{pct}%</span>
+                  <span className="ms-2 font-semibold text-foreground">{pct}%</span>
                 </span>
               </div>
               <div className="relative h-2 w-full overflow-hidden rounded-full bg-muted" style={{ maxWidth: `${widthPct}%` }}>
-                <div
-                  className="h-full rounded-full bg-primary"
-                  style={{ width: `${pct}%` }}
-                />
+                <div className="bg-brand-gradient h-full rounded-full" style={{ width: `${pct}%` }} />
               </div>
             </button>
           );
         })}
-      </CardContent>
-    </DashboardCard>
+      </div>
+    </Panel>
   );
 }

@@ -1,10 +1,4 @@
 import {
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Table,
   TableBody,
   TableCaption,
@@ -14,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { DashboardCard } from "@/components/dashboard-card";
+import { Panel } from "./panel";
 import { usePortfolio } from "./use-portfolio";
 import { money } from "./fmt";
 
@@ -29,34 +23,41 @@ export function PropNestAttention() {
   const { attention } = usePortfolio();
 
   return (
-    <DashboardCard className="relative gap-0 md:col-span-2">
-      <CardHeader className="border-b">
-        <CardTitle className="text-base">Needs attention</CardTitle>
-        <CardDescription>Tenants with outstanding balances or expiring coverage.</CardDescription>
-      </CardHeader>
-      <CardContent className="px-0">
+    <Panel className="md:col-span-2">
+      <header className="flex items-baseline justify-between gap-3 border-b px-5 py-4">
+        <div>
+          <h3 className="text-base font-semibold text-foreground">Needs attention</h3>
+          <p className="text-xs text-muted-foreground">Tenants with outstanding balances or expiring coverage.</p>
+        </div>
+        {attention.length > 0 && (
+          <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-semibold text-rose-700 dark:bg-rose-900/30 dark:text-rose-300">
+            {attention.length}
+          </span>
+        )}
+      </header>
+      <div>
         <Table>
           <TableCaption className="sr-only">
             Tenants requiring attention, sorted by balance owed.
           </TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead className="ps-6">Tenant</TableHead>
+              <TableHead className="ps-5">Tenant</TableHead>
               <TableHead>Property / Room</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="pe-6 text-right tabular-nums">Balance</TableHead>
+              <TableHead className="pe-5 text-right tabular-nums">Balance</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {attention.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={4} className="h-24 text-center text-sm text-muted-foreground">
                   Nothing outstanding. Coverage is up to date.
                 </TableCell>
               </TableRow>
             ) : attention.map((row) => (
               <TableRow className="h-12" key={row.id}>
-                <TableCell className="max-w-40 truncate ps-6 font-medium">{row.name}</TableCell>
+                <TableCell className="max-w-40 truncate ps-5 font-medium">{row.name}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {row.property} <span className="text-muted-foreground/70">· {row.room}</span>
                 </TableCell>
@@ -65,12 +66,12 @@ export function PropNestAttention() {
                     {row.status.replace(/_/g, " ").toLowerCase()}
                   </Badge>
                 </TableCell>
-                <TableCell className="pe-6 text-right tabular-nums">{money(row.balance)}</TableCell>
+                <TableCell className="pe-5 text-right tabular-nums font-semibold">{money(row.balance)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </CardContent>
-    </DashboardCard>
+      </div>
+    </Panel>
   );
 }

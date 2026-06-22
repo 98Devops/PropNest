@@ -66,7 +66,7 @@ export function PropertyCard({
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-primary transition-[width]"
+              className="h-full rounded-full bg-brand-gradient transition-[width]"
               style={{ width: `${pct}%` }}
             />
           </div>
