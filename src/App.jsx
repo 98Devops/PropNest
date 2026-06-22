@@ -27,17 +27,17 @@ const NAV = [
    FALLBACK SEED (demo mode when Supabase not configured)
 ═══════════════════════════════════════════════════════════ */
 const DEMO_PROPS = [
-  { id:"demo-kf", name:"King Fisher", location:"Harare", rooms:[
+  { id:"demo-mc", name:"Maple Court", location:"Riverside", rooms:[
     { id:"d1",no:"Room 1",beds:4,rent:110,students:[
-      {id:"ds1",name:"Bethel Mudavanhu",paid:110,status:"PAID",date:"—",notes:"",payHistory:[]},
-      {id:"ds2",name:"Maitaishe Manatsa",paid:110,status:"PAID",date:"—",notes:"",payHistory:[]},
-      {id:"ds3",name:"Dephen Chakandinakira",paid:110,status:"PAID",date:"—",notes:"",payHistory:[]},
-      {id:"ds4",name:"Chengeto Kanyai",paid:110,status:"PAID",date:"—",notes:"",payHistory:[]},
+      {id:"ds1",name:"James Carter",paid:110,status:"PAID",date:"—",notes:"",payHistory:[]},
+      {id:"ds2",name:"Emily Brooks",paid:110,status:"PAID",date:"—",notes:"",payHistory:[]},
+      {id:"ds3",name:"Daniel Okafor",paid:110,status:"PAID",date:"—",notes:"",payHistory:[]},
+      {id:"ds4",name:"Chloe Bennett",paid:110,status:"PAID",date:"—",notes:"",payHistory:[]},
     ]},
   ], collected:440, expected:440, students:4, overdue:[], totalBeds:4, vacantBeds:0 },
-  { id:"demo-tc", name:"The Chase", location:"Harare", rooms:[], collected:0, expected:0, students:0, overdue:[], totalBeds:0, vacantBeds:0 },
-  { id:"demo-md", name:"Madden", location:"Harare", rooms:[], collected:0, expected:0, students:0, overdue:[], totalBeds:0, vacantBeds:0 },
-  { id:"demo-nh", name:"NEW HOUSE", location:"Harare", rooms:[], collected:0, expected:0, students:0, overdue:[], totalBeds:0, vacantBeds:0 },
+  { id:"demo-ow", name:"Oakwood", location:"Riverside", rooms:[], collected:0, expected:0, students:0, overdue:[], totalBeds:0, vacantBeds:0 },
+  { id:"demo-bg", name:"Birchgate", location:"Riverside", rooms:[], collected:0, expected:0, students:0, overdue:[], totalBeds:0, vacantBeds:0 },
+  { id:"demo-ch", name:"Cedar House", location:"Riverside", rooms:[], collected:0, expected:0, students:0, overdue:[], totalBeds:0, vacantBeds:0 },
 ];
 
 /* ═══════════════════════════════════════════════════════════
