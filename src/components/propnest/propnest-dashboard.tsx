@@ -2,6 +2,7 @@ import { PropNestStats } from "./stats";
 import { PropNestAttention } from "./attention";
 import { PropNestActivity } from "./activity";
 import { PropertyMix } from "./property-mix";
+import { MonthlyTrend } from "./monthly-trend";
 
 export function PropNestDashboard() {
   return (
@@ -22,7 +23,10 @@ export function PropNestDashboard() {
       </section>
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <PropertyMix />
+        <div className="lg:col-span-2 space-y-4">
+          <PropertyMix />
+          <MonthlyTrend />
+        </div>
         <PropNestActivity />
       </section>
 

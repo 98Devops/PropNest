@@ -3,8 +3,11 @@ import { AppShell } from "@/components/app-shell";
 import { NavProvider, useNav, type ScreenKey } from "@/lib/propnest-nav";
 import { PropNestDashboard } from "./propnest-dashboard";
 import { Properties } from "./properties";
-import { Button } from "@/components/ui/button";
-import { ConstructionIcon } from "lucide-react";
+import { Tenants } from "./tenants";
+import { Finance } from "./finance";
+import { Reports } from "./reports";
+import { CalendarScreen } from "./calendar";
+import { Settings } from "./settings";
 
 const VALID_SCREENS: ScreenKey[] = [
   "dashboard", "properties", "tenants", "finance", "reports", "calendar", "settings",
@@ -25,31 +28,16 @@ function ScreenSwitcher() {
     return () => window.removeEventListener("hashchange", sync);
   }, [setScreen]);
 
-  if (screen === "dashboard") return <PropNestDashboard />;
-  if (screen === "properties") return <Properties />;
-
-  return (
-    <div className="flex min-h-[60vh] items-center justify-center">
-      <div className="max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
-        <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-xl bg-brand-gradient-soft">
-          <ConstructionIcon className="size-5 text-brand-blue" />
-        </div>
-        <h2 className="text-lg font-semibold capitalize">
-          <span className="text-brand-gradient">{screen}</span> — rebuild in progress
-        </h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          This screen hasn&apos;t been fused into the new shell yet. The original
-          {" "}<span className="font-medium text-foreground">{screen}</span>{" "}
-          view is still available in the legacy app.
-        </p>
-        <div className="mt-5 flex justify-center gap-2">
-          <Button asChild variant="gradient">
-            <a href={window.location.pathname}>Open legacy view</a>
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
+  switch (screen) {
+    case "dashboard":  return <PropNestDashboard />;
+    case "properties": return <Properties />;
+    case "tenants":    return <Tenants />;
+    case "finance":    return <Finance />;
+    case "reports":    return <Reports />;
+    case "calendar":   return <CalendarScreen />;
+    case "settings":   return <Settings />;
+    default:           return <PropNestDashboard />;
+  }
 }
 
 export function PropNestShell() {

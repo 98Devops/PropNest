@@ -7,6 +7,7 @@ import { CustomSidebarTrigger } from "@/components/custom-sidebar-trigger";
 import { NavUser } from "@/components/nav-user";
 import { BellIcon } from "lucide-react";
 import { useNav } from "@/lib/propnest-nav";
+import { ThemeToggle } from "@/components/propnest/theme-toggle";
 
 export function AppHeader() {
   const { screen } = useNav();
@@ -28,6 +29,7 @@ export function AppHeader() {
         <AppBreadcrumbs page={activeItem ? { title: activeItem.title, icon: activeItem.icon } : undefined} />
       </div>
       <div className="flex items-center gap-3">
+        <ThemeToggle />
         <Button aria-label="Notifications" size="icon-sm" variant="outline">
           <BellIcon />
         </Button>

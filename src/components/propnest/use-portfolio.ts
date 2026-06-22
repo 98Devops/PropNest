@@ -62,6 +62,27 @@ export type PortfolioTotals = {
   attentionCount: number;
 };
 
+export type FlatTenant = {
+  id: string;
+  name: string;
+  property: string;
+  propertyId: string;
+  propertyColor: string;
+  room: string;
+  rent: number;
+  paid: number;
+  balance: number;
+  status: string;
+  checkIn: string;
+  phone?: string | null;
+};
+
+export type MonthlyPoint = {
+  key: string;       // 2026-05
+  label: string;     // May
+  collected: number;
+};
+
 export type RecentPayment = {
   id: string;
   studentName: string;
@@ -138,7 +159,61 @@ export function usePortfolio() {
     return rows.slice(0, 6);
   }, [properties]);
 
-  return { properties, totals, recentPayments, attention, loading };
+  const allTenants = useMemo<FlatTenant[]>(() => {
+    const out: FlatTenant[] = [];
+    for (const p of properties) {
+      for (const r of p.rooms) {
+        for (const s of r.students) {
+          if (s.status === "VACANT" || s.status === "VACATED") continue;
+          out.push({
+            id: s.id,
+            name: s.name,
+            property: p.name,
+            propertyId: p.id,
+            propertyColor: p.color,
+            room: r.no,
+            rent: r.rent,
+            paid: s.paid,
+            balance: s.balance,
+            status: s.status,
+            checkIn: s.date,
+          });
+        }
+      }
+    }
+    out.sort((a, b) => a.name.localeCompare(b.name));
+    return out;
+  }, [properties]);
+
+  const monthlyTrend = useMemo<MonthlyPoint[]>(() => {
+    const map = new Map<string, number>();
+    for (const p of properties) {
+      for (const r of p.rooms) {
+        for (const s of r.students) {
+          for (const pay of s.payHistory ?? []) {
+            if (!pay.date) continue;
+            const key = pay.date.slice(0, 7); // YYYY-MM
+            map.set(key, (map.get(key) ?? 0) + Number(pay.amount || 0));
+          }
+        }
+      }
+    }
+    // Anchor to the last 12 months ending current month
+    const now = new Date();
+    const months: MonthlyPoint[] = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      months.push({
+        key,
+        label: d.toLocaleString("en-US", { month: "short" }),
+        collected: map.get(key) ?? 0,
+      });
+    }
+    return months;
+  }, [properties]);
+
+  return { properties, totals, recentPayments, attention, allTenants, monthlyTrend, loading };
 }
 
 /**

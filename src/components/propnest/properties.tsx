@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { SearchIcon } from "lucide-react";
 import { PropertyCard } from "./property-card";
 import { PropertyDetail } from "./property-detail";
+import { Panel } from "./panel";
 import { usePortfolio } from "./use-portfolio";
 import { useNav } from "@/lib/propnest-nav";
 
@@ -31,11 +31,13 @@ export function Properties() {
     : properties;
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-6">
+      <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Properties</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            <span className="text-brand-gradient">Properties</span>
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {properties.length} propert{properties.length === 1 ? "y" : "ies"} in the portfolio
             {loading && <span className="ml-2 italic">· loading…</span>}
           </p>
@@ -49,16 +51,16 @@ export function Properties() {
             className="pl-9"
           />
         </div>
-      </div>
+      </header>
 
       {filtered.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+        <Panel>
+          <div className="py-12 text-center text-sm text-muted-foreground">
             {properties.length === 0
               ? "No properties yet."
               : "No properties match your search."}
-          </CardContent>
-        </Card>
+          </div>
+        </Panel>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((p) => (

@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { Building2Icon, AlertCircleIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { moneyCompact } from "./fmt";
@@ -20,15 +19,24 @@ export function PropertyCard({
   const attentionCount = property.overdue.length;
 
   return (
-    <Card
+    <button
+      type="button"
       onClick={onClick}
       className={cn(
-        "group relative cursor-pointer overflow-hidden p-0 transition-shadow hover:shadow-md",
+        "group relative flex flex-col overflow-hidden rounded-xl border bg-card text-left shadow-sm transition-all",
+        "hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
       )}
     >
-      <CardContent className="space-y-4 p-5">
+      {/* Brand stripe tinted by the property's own accent */}
+      <div
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-[3px]"
+        style={{ background: `linear-gradient(90deg, ${property.color} 0%, var(--brand-purple) 100%)` }}
+      />
+
+      <div className="space-y-4 p-5">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 min-w-0">
+          <div className="flex min-w-0 items-start gap-3">
             <div
               className="flex size-10 shrink-0 items-center justify-center rounded-lg"
               style={{ background: `${property.color}1a`, color: property.color }}
@@ -42,7 +50,7 @@ export function PropertyCard({
             </div>
           </div>
           {attentionCount > 0 && (
-            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-destructive">
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700 dark:bg-rose-900/30 dark:text-rose-300">
               <AlertCircleIcon className="size-3" />
               {attentionCount}
             </span>
@@ -50,50 +58,57 @@ export function PropertyCard({
         </div>
 
         <div className="grid grid-cols-3 gap-3 border-t pt-3 text-xs">
-          <Stat label="Rooms"   value={String(property.rooms.length)} />
-          <Stat label="Tenants" value={`${property.students} / ${property.totalBeds}`} />
-          <Stat label="Vacant"  value={String(property.vacantBeds)} />
+          <MiniStat label="Rooms"   value={String(property.rooms.length)} />
+          <MiniStat label="Tenants" value={`${property.students}/${property.totalBeds}`} />
+          <MiniStat label="Vacant"  value={String(property.vacantBeds)} />
         </div>
 
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Collection</span>
-            <span className="tabular-nums text-foreground">
+        <ProgressLine
+          label="Collection"
+          pct={pct}
+          right={
+            <>
               {moneyCompact(property.collected)}
-              <span className="text-muted-foreground"> / {moneyCompact(property.expected)}</span>
-              <span className="ms-2 font-medium">{pct}%</span>
-            </span>
-          </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-brand-gradient transition-[width]"
-              style={{ width: `${pct}%` }}
-            />
-          </div>
-        </div>
+              <span className="text-muted-foreground/60"> / {moneyCompact(property.expected)}</span>
+              <span className="ms-2 font-semibold text-foreground">{pct}%</span>
+            </>
+          }
+          tone="gradient"
+        />
 
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Occupancy</span>
-            <span className="tabular-nums font-medium">{occPct}%</span>
-          </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full rounded-full bg-emerald-500 transition-[width]"
-              style={{ width: `${occPct}%` }}
-            />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        <ProgressLine
+          label="Occupancy"
+          pct={occPct}
+          right={<span className="font-semibold text-foreground">{occPct}%</span>}
+          tone="success"
+        />
+      </div>
+    </button>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className="mt-0.5 tabular-nums font-semibold text-foreground">{value}</div>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div className="mt-0.5 font-semibold tabular-nums text-foreground">{value}</div>
+    </div>
+  );
+}
+
+function ProgressLine({
+  label, pct, right, tone,
+}: { label: string; pct: number; right: React.ReactNode; tone: "gradient" | "success" }) {
+  const bar = tone === "gradient" ? "bg-brand-gradient" : "bg-emerald-500";
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="tabular-nums text-muted-foreground">{right}</span>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className={`${bar} h-full rounded-full transition-[width]`} style={{ width: `${pct}%` }} />
+      </div>
     </div>
   );
 }

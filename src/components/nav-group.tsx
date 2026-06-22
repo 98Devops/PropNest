@@ -63,7 +63,7 @@ export function NavGroup({ label, items }: SidebarNavGroup) {
 								<SidebarMenuButton
 									asChild
 									isActive={item.isActive}
-									className="data-[active=true]:bg-brand-gradient data-[active=true]:text-white data-[active=true]:shadow-sm data-[active=true]:hover:brightness-110 data-[active=true]:[&>span]:text-white! data-[active=true]:[&_svg]:text-white"
+									className="data-[active=true]:bg-brand-gradient! data-[active=true]:text-white! data-[active=true]:shadow-sm data-[active=true]:hover:brightness-110 data-[active=true]:[&_span]:text-white! data-[active=true]:[&_svg]:text-white!"
 								>
 									<a href={item.path}>
 										{item.icon}

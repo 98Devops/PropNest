@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { ChevronDownIcon, BedSingleIcon, UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { money } from "./fmt";
-import { CoverageStatusBadge, CoverageRunwayBar, coverageSubLabel } from "./coverage";
+import { CoverageStatusBadge, coverageSubLabel } from "./coverage";
 import type { PortfolioRow } from "./use-portfolio";
 
 type Room = PortfolioRow["rooms"][number];
@@ -28,34 +27,37 @@ export function RoomRow({
   const overdue = real.filter((s) => coverageMap.get(s.id)?.status === "OVERDUE").length;
   const coveragePct = real.length > 0 ? Math.round((covered / real.length) * 100) : 0;
 
+  const barTone =
+    overdue > 0 ? "bg-rose-500" :
+    coveragePct === 100 ? "bg-brand-gradient" :
+    "bg-amber-500";
+
   return (
-    <Card className="overflow-hidden p-0">
+    <div className="overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-sm">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+        className="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/40"
         aria-expanded={open}
       >
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+        <span className="bg-brand-gradient-soft text-brand-blue flex size-9 shrink-0 items-center justify-center rounded-lg">
           <BedSingleIcon className="size-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-foreground">{room.no}</span>
-            <span className="text-xs text-muted-foreground">· {room.beds} bed{room.beds === 1 ? "" : "s"}</span>
-            <span className="text-xs text-muted-foreground">· {money(room.rent)}/mo</span>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <span className="font-semibold text-foreground">{room.no}</span>
+            <span className="text-xs text-muted-foreground">{room.beds} bed{room.beds === 1 ? "" : "s"}</span>
+            <span className="text-xs text-muted-foreground">·</span>
+            <span className="text-xs tabular-nums text-muted-foreground">{money(room.rent)}/mo</span>
           </div>
           <div className="mt-1.5 flex items-center gap-3">
-            <CoverageRunwayBar
-              className="max-w-[180px]"
-              coverage={{
-                status: overdue > 0 ? "OVERDUE" : coveragePct === 100 ? "CURRENT" : "EXPIRING_SOON",
-                daysRemaining: coveragePct,
-              }}
-            />
+            <div className="h-1.5 max-w-[180px] flex-1 overflow-hidden rounded-full bg-muted">
+              <div className={cn("h-full rounded-full transition-[width]", barTone)} style={{ width: `${coveragePct}%` }} />
+            </div>
             <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-              {covered}/{real.length} covered
-              {vacant > 0 && <> · <span className="text-amber-600">{vacant} vacant</span></>}
+              <span className="font-medium text-foreground">{covered}/{real.length}</span> covered
+              {vacant > 0 && <> · <span className="text-amber-600 dark:text-amber-400">{vacant} vacant</span></>}
+              {overdue > 0 && <> · <span className="text-rose-600 dark:text-rose-400">{overdue} overdue</span></>}
             </span>
           </div>
         </div>
@@ -68,7 +70,7 @@ export function RoomRow({
       </button>
 
       {open && (
-        <CardContent className="border-t bg-muted/30 px-4 py-3">
+        <div className="border-t bg-muted/30 px-4 py-3">
           {real.length === 0 ? (
             <div className="py-3 text-center text-sm text-muted-foreground">
               All beds vacant.
@@ -79,7 +81,7 @@ export function RoomRow({
                 const cov = coverageMap.get(s.id) ?? null;
                 return (
                   <li key={s.id} className="flex items-center gap-3 py-3">
-                    <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-background text-muted-foreground">
+                    <span className="bg-background text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full">
                       <UserIcon className="size-4" />
                     </span>
                     <div className="min-w-0 flex-1">
@@ -88,7 +90,13 @@ export function RoomRow({
                     </div>
                     <div className="text-right">
                       <div className="text-xs tabular-nums text-muted-foreground">
-                        Balance <span className={cn("font-medium text-foreground", s.balance > 0 && "text-destructive")}>{money(s.balance)}</span>
+                        Balance{" "}
+                        <span className={cn(
+                          "font-semibold",
+                          s.balance > 0 ? "text-rose-600 dark:text-rose-400" : "text-foreground",
+                        )}>
+                          {money(s.balance)}
+                        </span>
                       </div>
                       <div className="mt-1">
                         <CoverageStatusBadge coverage={cov} />
@@ -99,8 +107,8 @@ export function RoomRow({
               })}
             </ul>
           )}
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </div>
   );
 }
