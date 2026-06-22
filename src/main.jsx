@@ -1,9 +1,19 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import './index.css'
 import App from './App.jsx'
+import { AuthProvider, DataProvider } from './parts/p1_imports_context.jsx'
+import PropNestShell from './components/propnest/propnest-shell'
+
+const params = new URLSearchParams(window.location.search)
+const showEfferd = params.has('efferd')
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <AuthProvider>
+      <DataProvider>
+        {showEfferd ? <PropNestShell /> : <App />}
+      </DataProvider>
+    </AuthProvider>
   </StrictMode>,
 )

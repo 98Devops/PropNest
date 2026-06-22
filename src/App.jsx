@@ -617,11 +617,7 @@ function ReportDownloadModal({ props, user, onClose }) {
    ROOT APP — wrapped with providers
 ═══════════════════════════════════════════════════════════ */
 export default function App() {
-  return (
-    <AuthProvider>
-      <DataProvider>
-        <AppInner />
-      </DataProvider>
-    </AuthProvider>
-  );
+  // Providers are now hoisted to src/main.jsx so the new PropNest shell
+  // (mounted at ?efferd=1) can read the same auth + data contexts.
+  return <AppInner />;
 }
