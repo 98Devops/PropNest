@@ -448,3 +448,25 @@ left join monthly_obligations mo
   on mo.student_id = s.id
   and mo.month = date_trunc('month', current_date)::date
 group by p.id, p.name, p.color_accent;
+
+-- ═══════════════════════════════════════════════════════════
+-- ROLE GRANTS  (CRITICAL after a `drop schema public cascade`)
+-- ═══════════════════════════════════════════════════════════
+-- Dropping & recreating the public schema wipes the default privileges Supabase
+-- pre-configures, so the anon/authenticated/service_role roles end up with NO
+-- table privileges -> "permission denied for table" (403) on every query, before
+-- RLS is even consulted. Re-grant table/sequence/function access (RLS still
+-- governs which ROWS each user sees) and restore default privileges so future
+-- tables are covered too.
+grant usage on schema public to anon, authenticated, service_role;
+
+grant all on all tables    in schema public to anon, authenticated, service_role;
+grant all on all sequences in schema public to anon, authenticated, service_role;
+grant all on all functions in schema public to anon, authenticated, service_role;
+
+alter default privileges in schema public
+  grant all on tables to anon, authenticated, service_role;
+alter default privileges in schema public
+  grant all on sequences to anon, authenticated, service_role;
+alter default privileges in schema public
+  grant all on functions to anon, authenticated, service_role;
