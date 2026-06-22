@@ -30,7 +30,8 @@ export function AuthProvider({ children }) {
         // by Supabase RLS + per-account membership (PropNest Phase 2).
         const ALLOWED_EMAILS = [
           "admin@propnest.app",
-          "manager@propnest.app"
+          "manager@propnest.app",
+          "tfrsuperfx@gmail.com"
         ];
         
         const { data: { session } } = await supabase.auth.getSession();

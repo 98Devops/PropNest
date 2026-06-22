@@ -49,6 +49,14 @@ create table if not exists students (
     check (status in ('ACTIVE','VACATED','SUSPENDED')),
   notes                  text,
   data_flags             text,  -- pipe-separated flag descriptions for Data Quality view
+  -- ── Coverage engine: DERIVED CACHE of (payments + room rent). ──
+  -- Written ONLY by the JS engine (rebuildStudentCoverage); never hand-authored.
+  -- Nullable: a student with no payment yet has no coverage.
+  coverage_start         date,
+  coverage_end           date,
+  daily_rate             numeric(8,2),
+  next_due_date          date,
+  billing_anchor_date    date,
   created_at             timestamptz default now(),
   created_by             uuid references auth.users(id)
 );
@@ -66,6 +74,10 @@ create table if not exists payments (
   receipt_number text,
   month_year     text not null,  -- derived: 'YYYY-MM' format
   notes          text,
+  -- ── Per-payment coverage slice (what this payment bought). Derived cache. ──
+  coverage_start_date date,
+  coverage_end_date   date,
+  days_covered        integer,
   recorded_by    uuid references auth.users(id),
   created_at     timestamptz default now()
 );
@@ -85,6 +97,21 @@ create table if not exists monthly_obligations (
   due_date    date,
   updated_at  timestamptz default now(),
   unique(student_id, month)
+);
+
+-- ─────────────────────────────────────────────
+-- 5b. STUDENT TRANSFERS (audit trail of room changes)
+-- ─────────────────────────────────────────────
+create table if not exists student_transfers (
+  id            uuid primary key default gen_random_uuid(),
+  student_id    uuid not null references students(id) on delete cascade,
+  from_room_id  uuid not null references rooms(id),
+  to_room_id    uuid not null references rooms(id),
+  transfer_date date not null default current_date,
+  reason        text,
+  performed_by  uuid references auth.users(id),
+  created_at    timestamptz default now(),
+  constraint different_rooms check (from_room_id != to_room_id)
 );
 
 -- ─────────────────────────────────────────────
@@ -231,6 +258,7 @@ alter table rooms               enable row level security;
 alter table students            enable row level security;
 alter table payments            enable row level security;
 alter table monthly_obligations enable row level security;
+alter table student_transfers   enable row level security;
 alter table profiles            enable row level security;
 
 -- Helper function: check if current user is admin
@@ -308,6 +336,20 @@ create policy "Admin full access to obligations" on monthly_obligations
   for all using (is_admin());
 
 create policy "Manager can read own property obligations" on monthly_obligations
+  for select using (
+    is_admin() or
+    student_id in (
+      select s.id from students s
+      join rooms r on r.id = s.room_id
+      where r.property_id = my_property_id()
+    )
+  );
+
+-- ── STUDENT TRANSFERS ──
+create policy "Admin full access to transfers" on student_transfers
+  for all using (is_admin());
+
+create policy "Manager can read own property transfers" on student_transfers
   for select using (
     is_admin() or
     student_id in (
