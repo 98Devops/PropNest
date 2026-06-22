@@ -1,10 +1,17 @@
 -- ═══════════════════════════════════════════════════════════
--- TREVIS PRODUCTION DATABASE SCHEMA
+-- PropNest DATABASE SCHEMA
 -- Run this entire file in your Supabase SQL Editor
 -- ═══════════════════════════════════════════════════════════
 
 -- Enable UUID generation
 create extension if not exists "pgcrypto";
+
+-- Self-heal: the signup trigger lives on auth.users (auth schema), so a prior
+-- `drop schema public cascade` can leave it orphaned, pointing at a profiles
+-- table that no longer exists — which then blocks ALL new-user creation.
+-- Drop it up front; it is recreated (hardened) further down this file.
+drop trigger if exists trg_new_user_profile on auth.users;
+drop function if exists handle_new_user() cascade;
 
 -- ─────────────────────────────────────────────
 -- 1. PROPERTIES
