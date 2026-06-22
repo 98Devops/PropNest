@@ -58,7 +58,7 @@ export function MonthlyTrend() {
                 borderRadius: 10,
                 fontSize: 12,
               }}
-              formatter={(value: number) => [money(value), "Collected"]}
+              formatter={(value) => [money(Number(value)), "Collected"]}
             />
             <Area
               type="monotone"

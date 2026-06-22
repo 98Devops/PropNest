@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLinkIcon, MoonIcon, SunIcon, UserIcon, BellIcon, ShieldIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-// @ts-expect-error - JS module without types
 import { useAuth } from "@/parts/p1_imports_context.jsx";
 
 const KEY = "propnest:theme";

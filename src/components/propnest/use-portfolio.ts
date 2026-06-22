@@ -1,11 +1,8 @@
 import { useMemo } from "react";
-// @ts-expect-error - JS module without types (Phase 1 will type these)
+// Engine modules (brief §3) — JS-typed, consumed without modification.
 import { useData } from "@/parts/p1_imports_context.jsx";
-// @ts-expect-error - JS helper
 import { buildProps } from "@/parts/p2_helpers.jsx";
-// @ts-expect-error - JS module
 import { useCoverageStore } from "@/hooks/useCoverageStore.js";
-// @ts-expect-error - JS module
 import { isConfigured } from "@/lib/supabase";
 
 export type PortfolioRow = {
@@ -99,7 +96,7 @@ export type RecentPayment = {
  * stays a pure presenter.
  */
 export function usePortfolio() {
-  const { properties: rawProps, loading } = useData() as { properties: unknown[]; loading: boolean };
+  const { properties: rawProps, loading } = useData() as unknown as { properties: unknown[]; loading: boolean };
 
   const properties = useMemo<PortfolioRow[]>(
     () => (rawProps.length ? buildProps(rawProps) : []),
@@ -221,7 +218,7 @@ export function usePortfolio() {
  * so the rest of the UI doesn't import engine modules directly.
  */
 export function usePortfolioCoverage() {
-  const store = useCoverageStore(isConfigured) as {
+  const store = useCoverageStore(isConfigured) as unknown as {
     coverageMap: Map<string, { status: string; daysRemaining?: number; daysOverdue?: number; coverageEnd?: string }>;
     loading: boolean;
     refresh: () => void;

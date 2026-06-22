@@ -11,11 +11,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserIcon, SettingsIcon, LogOutIcon } from "lucide-react";
-// @ts-expect-error - JS module without types
 import { useAuth } from "@/parts/p1_imports_context.jsx";
 
 export function NavUser() {
-  const auth = useAuth() as { user?: { email?: string; role?: string } | null; logout?: () => Promise<void> | void } | null;
+  const auth = useAuth() as unknown as { user?: { email?: string; role?: string } | null; logout?: () => Promise<void> | void } | null;
   const user = auth?.user ?? null;
   const email = user?.email ?? "guest@propnest.app";
   const role = user?.role ?? "guest";

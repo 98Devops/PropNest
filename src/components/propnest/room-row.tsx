@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { ChevronDownIcon, BedSingleIcon, UserIcon } from "lucide-react";
+import { ChevronDownIcon, BedSingleIcon, UserIcon, PlusIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { money } from "./fmt";
 import { CoverageStatusBadge, coverageSubLabel } from "./coverage";
 import type { PortfolioRow } from "./use-portfolio";
+import { RecordPaymentSheet } from "./modals/record-payment-sheet";
 
 type Room = PortfolioRow["rooms"][number];
 type CoverageMap = Map<string, { status: string; daysRemaining?: number; daysOverdue?: number; coverageEnd?: string }>;
@@ -16,6 +18,7 @@ export function RoomRow({
   coverageMap: CoverageMap;
 }) {
   const [open, setOpen] = useState(false);
+  const [payFor, setPayFor] = useState<string | null>(null);
 
   const real = room.students.filter((s) => s.status !== "VACANT" && s.status !== "VACATED");
   const vacant = Math.max(0, room.beds - real.length);
@@ -88,19 +91,29 @@ export function RoomRow({
                       <div className="truncate text-sm font-medium text-foreground">{s.name}</div>
                       <div className="text-xs text-muted-foreground">{coverageSubLabel(cov)}</div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-xs tabular-nums text-muted-foreground">
-                        Balance{" "}
-                        <span className={cn(
-                          "font-semibold",
-                          s.balance > 0 ? "text-rose-600 dark:text-rose-400" : "text-foreground",
-                        )}>
-                          {money(s.balance)}
-                        </span>
+                    <div className="flex items-center gap-2 text-right">
+                      <div>
+                        <div className="text-xs tabular-nums text-muted-foreground">
+                          Balance{" "}
+                          <span className={cn(
+                            "font-semibold",
+                            s.balance > 0 ? "text-rose-600 dark:text-rose-400" : "text-foreground",
+                          )}>
+                            {money(s.balance)}
+                          </span>
+                        </div>
+                        <div className="mt-1">
+                          <CoverageStatusBadge coverage={cov} />
+                        </div>
                       </div>
-                      <div className="mt-1">
-                        <CoverageStatusBadge coverage={cov} />
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="icon-sm"
+                        aria-label={`Record payment for ${s.name}`}
+                        onClick={() => setPayFor(s.id)}
+                      >
+                        <PlusIcon />
+                      </Button>
                     </div>
                   </li>
                 );
@@ -109,6 +122,12 @@ export function RoomRow({
           )}
         </div>
       )}
+
+      <RecordPaymentSheet
+        open={payFor !== null}
+        onOpenChange={(o) => !o && setPayFor(null)}
+        defaultStudentId={payFor ?? undefined}
+      />
     </div>
   );
 }

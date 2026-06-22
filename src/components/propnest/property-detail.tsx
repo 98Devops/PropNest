@@ -1,13 +1,14 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeftIcon, SearchIcon } from "lucide-react";
+import { ArrowLeftIcon, PlusIcon, SearchIcon } from "lucide-react";
 import { money, moneyCompact } from "./fmt";
 import { RoomRow } from "./room-row";
 import { Panel } from "./panel";
 import { StatCard } from "./stat-card";
 import { DeltaPill } from "./delta-pill";
 import { usePortfolioCoverage, type PortfolioRow } from "./use-portfolio";
+import { RecordPaymentSheet } from "./modals/record-payment-sheet";
 
 export function PropertyDetail({
   property,
@@ -17,6 +18,7 @@ export function PropertyDetail({
   onBack: () => void;
 }) {
   const [search, setSearch] = useState("");
+  const [payOpen, setPayOpen] = useState(false);
   const { coverageMap, loading: coverageLoading } = usePortfolioCoverage();
 
   const filteredRooms = useMemo(() => {
@@ -59,7 +61,16 @@ export function PropertyDetail({
             {property.rooms.length} room{property.rooms.length === 1 ? "" : "s"} · {property.totalBeds} bed{property.totalBeds === 1 ? "" : "s"} · {property.students} tenant{property.students === 1 ? "" : "s"}
           </p>
         </div>
+        <Button variant="gradient" onClick={() => setPayOpen(true)} disabled={property.students === 0}>
+          <PlusIcon /> Record payment
+        </Button>
       </header>
+
+      <RecordPaymentSheet
+        open={payOpen}
+        onOpenChange={setPayOpen}
+        propertyId={property.id}
+      />
 
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard
