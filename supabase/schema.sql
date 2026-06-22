@@ -234,15 +234,27 @@ create trigger trg_new_student_obligation
   for each row execute function create_obligation_for_new_student();
 
 -- Trigger function: auto-create profile on new user signup
+-- SECURITY DEFINER + pinned search_path so it resolves `profiles` correctly and
+-- runs with the function owner's rights during auth.users insert (Supabase signup).
+-- EXCEPTION guard: a failure here must NOT block user creation in auth.users.
 create or replace function handle_new_user()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
 begin
-  insert into profiles (id, email, role)
+  insert into public.profiles (id, email, role)
   values (NEW.id, NEW.email, 'MANAGER')
   on conflict (id) do nothing;
   return NEW;
+exception
+  when others then
+    -- Never break signup; profile can be created/repaired later.
+    raise warning 'handle_new_user failed for %: %', NEW.id, SQLERRM;
+    return NEW;
 end;
-$$ language plpgsql security definer;
+$$;
 
 drop trigger if exists trg_new_user_profile on auth.users;
 create trigger trg_new_user_profile
