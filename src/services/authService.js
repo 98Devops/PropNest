@@ -7,9 +7,11 @@ export async function signIn(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { data: null, error };
   
-  // Use RPC function that bypasses RLS to get profile
+  // Use RPC function that bypasses RLS to get profile.
+  // get_my_profile() RETURNS TABLE, so the RPC yields an array — take row 0.
   try {
-    const { data: profile, error: rpcErr } = await supabase.rpc('get_my_profile');
+    const { data: rpcData, error: rpcErr } = await supabase.rpc('get_my_profile');
+    const profile = Array.isArray(rpcData) ? rpcData[0] : rpcData;
     debug('[PropNest] Profile via RPC:', profile, 'error:', rpcErr);
     if (profile && !rpcErr) {
       return { data: { ...data.user, ...profile }, error: null };
@@ -38,9 +40,10 @@ export async function getCurrentUser() {
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) return { data: null, error };
   
-  // Use RPC function that bypasses RLS
+  // Use RPC function that bypasses RLS (RETURNS TABLE -> array; take row 0)
   try {
-    const { data: profile, error: rpcErr } = await supabase.rpc('get_my_profile');
+    const { data: rpcData, error: rpcErr } = await supabase.rpc('get_my_profile');
+    const profile = Array.isArray(rpcData) ? rpcData[0] : rpcData;
     if (profile && !rpcErr) {
       return { data: { ...user, ...profile }, error: null };
     }
