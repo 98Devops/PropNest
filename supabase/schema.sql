@@ -281,20 +281,45 @@ alter table student_transfers   enable row level security;
 alter table profiles            enable row level security;
 
 -- Helper function: check if current user is admin
+-- SECURITY DEFINER + search_path so its read of `profiles` bypasses RLS (the
+-- definer owns the table and is not FORCE-RLS), preventing policy recursion.
 create or replace function is_admin()
-returns boolean as $$
+returns boolean
+language sql security definer stable
+set search_path = public
+as $$
   select exists (
     select 1 from profiles
      where id = auth.uid()
        and role = 'ADMIN'
   );
-$$ language sql security definer stable;
+$$;
 
 -- Helper function: get current user's assigned property_id
 create or replace function my_property_id()
-returns uuid as $$
+returns uuid
+language sql security definer stable
+set search_path = public
+as $$
   select property_id from profiles where id = auth.uid();
-$$ language sql security definer stable;
+$$;
+
+-- RPC: the app reads the signed-in user's profile through this (authService.js).
+-- SECURITY DEFINER so it bypasses the profiles RLS policy entirely — this is the
+-- canonical, recursion-free way to load role/property for the current user.
+create or replace function get_my_profile()
+returns table (id uuid, email text, full_name text, role text, property_id uuid)
+language sql security definer stable
+set search_path = public
+as $$
+  select p.id, p.email, p.full_name, p.role, p.property_id
+  from profiles p
+  where p.id = auth.uid();
+$$;
+
+grant execute on function is_admin()        to authenticated, anon;
+grant execute on function my_property_id()   to authenticated, anon;
+grant execute on function get_my_profile()   to authenticated, anon;
 
 -- ── PROPERTIES ──
 drop policy if exists "Admin full access to properties" on properties;
