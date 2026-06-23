@@ -196,7 +196,7 @@ export function PropertyDetail({
           ) : (
             <div className="space-y-2">
               {filteredRooms.map((room) => (
-                <RoomRow key={room.id} room={room} coverageMap={coverageMap} />
+                <RoomRow key={room.id} room={room} coverageMap={coverageMap} isAdmin={isAdmin} />
               ))}
             </div>
           )}

@@ -6,6 +6,7 @@ import { money } from "./fmt";
 import { CoverageStatusBadge, coverageSubLabel } from "./coverage";
 import type { PortfolioRow } from "./use-portfolio";
 import { RecordPaymentSheet } from "./modals/record-payment-sheet";
+import { RoomRowActions } from "./modals/room-row-actions";
 import { useNav } from "@/lib/propnest-nav";
 
 type Room = PortfolioRow["rooms"][number];
@@ -14,9 +15,11 @@ type CoverageMap = Map<string, { status: string; daysRemaining?: number; daysOve
 export function RoomRow({
   room,
   coverageMap,
+  isAdmin = false,
 }: {
   room: Room;
   coverageMap: CoverageMap;
+  isAdmin?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [payFor, setPayFor] = useState<string | null>(null);
@@ -39,40 +42,45 @@ export function RoomRow({
 
   return (
     <div className="overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-sm">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-4 px-4 py-3 text-left transition-colors hover:bg-muted/40"
-        aria-expanded={open}
-      >
-        <span className="bg-brand-gradient-soft text-brand-blue flex size-9 shrink-0 items-center justify-center rounded-lg">
-          <BedSingleIcon className="size-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <span className="font-semibold text-foreground">{room.no}</span>
-            <span className="text-xs text-muted-foreground">{room.beds} bed{room.beds === 1 ? "" : "s"}</span>
-            <span className="text-xs text-muted-foreground">·</span>
-            <span className="text-xs tabular-nums text-muted-foreground">{money(room.rent)}/mo</span>
-          </div>
-          <div className="mt-1.5 flex items-center gap-3">
-            <div className="h-1.5 max-w-[180px] flex-1 overflow-hidden rounded-full bg-muted">
-              <div className={cn("h-full rounded-full transition-[width]", barTone)} style={{ width: `${coveragePct}%` }} />
+      <div className="flex w-full items-center gap-1 pe-2 transition-colors hover:bg-muted/40">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="flex flex-1 items-center gap-4 px-4 py-3 text-left"
+          aria-expanded={open}
+        >
+          <span className="bg-brand-gradient-soft text-brand-blue flex size-9 shrink-0 items-center justify-center rounded-lg">
+            <BedSingleIcon className="size-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span className="font-semibold text-foreground">{room.no}</span>
+              <span className="text-xs text-muted-foreground">{room.beds} bed{room.beds === 1 ? "" : "s"}</span>
+              <span className="text-xs text-muted-foreground">·</span>
+              <span className="text-xs tabular-nums text-muted-foreground">{money(room.rent)}/mo</span>
             </div>
-            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-              <span className="font-medium text-foreground">{covered}/{real.length}</span> covered
-              {vacant > 0 && <> · <span className="text-amber-600 dark:text-amber-400">{vacant} vacant</span></>}
-              {overdue > 0 && <> · <span className="text-rose-600 dark:text-rose-400">{overdue} overdue</span></>}
-            </span>
+            <div className="mt-1.5 flex items-center gap-3">
+              <div className="h-1.5 max-w-[180px] flex-1 overflow-hidden rounded-full bg-muted">
+                <div className={cn("h-full rounded-full transition-[width]", barTone)} style={{ width: `${coveragePct}%` }} />
+              </div>
+              <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                <span className="font-medium text-foreground">{covered}/{real.length}</span> covered
+                {vacant > 0 && <> · <span className="text-amber-600 dark:text-amber-400">{vacant} vacant</span></>}
+                {overdue > 0 && <> · <span className="text-rose-600 dark:text-rose-400">{overdue} overdue</span></>}
+              </span>
+            </div>
           </div>
-        </div>
-        <ChevronDownIcon
-          className={cn(
-            "size-4 shrink-0 text-muted-foreground transition-transform",
-            open && "rotate-180",
-          )}
-        />
-      </button>
+          <ChevronDownIcon
+            className={cn(
+              "size-4 shrink-0 text-muted-foreground transition-transform",
+              open && "rotate-180",
+            )}
+          />
+        </button>
+        {isAdmin && (
+          <RoomRowActions room={{ id: room.id, no: room.no, activeCount: real.length }} />
+        )}
+      </div>
 
       {open && (
         <div className="border-t bg-muted/30 px-4 py-3">
