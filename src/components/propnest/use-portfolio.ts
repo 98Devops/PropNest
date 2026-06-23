@@ -2,8 +2,11 @@ import { useMemo } from "react";
 // Engine modules (brief §3) — JS-typed, consumed without modification.
 import { useData } from "@/parts/p1_imports_context.jsx";
 import { buildProps } from "@/parts/p2_helpers.jsx";
-import { useCoverageStore } from "@/hooks/useCoverageStore.js";
-import { isConfigured } from "@/lib/supabase";
+
+// Coverage now flows through the shared CoverageProvider (one fetch for the whole
+// tree) — re-exported here so existing `import { usePortfolioCoverage } from "./use-portfolio"`
+// call-sites keep working unchanged.
+export { usePortfolioCoverage, usePortfolioAttention } from "./coverage-context";
 
 export type PortfolioRow = {
   id: string;
@@ -230,17 +233,4 @@ export function usePortfolio() {
   };
 
   return { properties, totals, recentPayments, attention, allTenants, monthlyTrend, findTenant, loading };
-}
-
-/**
- * Coverage map shared with PropertyDetail / RoomRow — wraps useCoverageStore
- * so the rest of the UI doesn't import engine modules directly.
- */
-export function usePortfolioCoverage() {
-  const store = useCoverageStore(isConfigured) as unknown as {
-    coverageMap: Map<string, { status: string; daysRemaining?: number; daysOverdue?: number; coverageEnd?: string }>;
-    loading: boolean;
-    refresh: () => void;
-  };
-  return store;
 }

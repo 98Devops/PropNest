@@ -17,8 +17,7 @@ import { MoreVerticalIcon, PencilIcon, Trash2Icon, Loader2Icon } from "lucide-re
 import { useLabels } from "@/lib/vertical-labels";
 // Engine modules (brief §3) — consumed without modification.
 import { useData, useAuth } from "@/parts/p1_imports_context.jsx";
-import { useCoverageStore } from "@/hooks/useCoverageStore.js";
-import { isConfigured } from "@/lib/supabase";
+import { usePortfolioCoverage } from "../coverage-context";
 import { updateRoom, removeRoom } from "@/services/propertyService.js";
 
 type RoomLite = { id: string; no: string; activeCount: number };
@@ -68,7 +67,7 @@ export function RoomRowActions({ room }: RoomRowActionsProps) {
 
 function useRefreshAll() {
   const { refresh: refreshData } = useData() as unknown as { refresh: () => void };
-  const { refresh: refreshCoverage } = useCoverageStore(isConfigured) as unknown as { refresh: () => void };
+  const { refresh: refreshCoverage } = usePortfolioCoverage() as unknown as { refresh: () => void };
   return () => { refreshData(); refreshCoverage(); };
 }
 

@@ -19,9 +19,7 @@ import { useNav } from "@/lib/propnest-nav";
 import { useLabels } from "@/lib/vertical-labels";
 // Engine modules (brief §3) — consumed without modification.
 import { useAuth, useData } from "@/parts/p1_imports_context.jsx";
-import { useCoverageStore } from "@/hooks/useCoverageStore.js";
 import { updateStudent } from "@/services/studentService.js";
-import { isConfigured } from "@/lib/supabase";
 import { usePortfolio, usePortfolioCoverage } from "../use-portfolio";
 import { CoverageStatusBadge, coverageSubLabel } from "../coverage";
 import { EditableField } from "../editable-field";
@@ -37,12 +35,14 @@ import { VacateTenantDialog } from "./vacate-tenant-dialog";
 export function TenantProfileDrawer() {
   const { selectedTenantId, closeTenant, openProperty } = useNav();
   const { findTenant } = usePortfolio();
-  const { coverageMap } = usePortfolioCoverage();
+  const { coverageMap, refresh: refreshCoverage } = usePortfolioCoverage() as unknown as {
+    coverageMap: Map<string, { status: string; daysRemaining?: number; daysOverdue?: number; coverageEnd?: string }>;
+    refresh: () => void;
+  };
   const labels = useLabels();
   const auth = useAuth() as unknown as { user?: { role?: string } | null } | null;
   const isAdmin = auth?.user?.role?.toUpperCase() === "ADMIN";
   const { refresh: refreshData } = useData() as unknown as { refresh: () => void };
-  const { refresh: refreshCoverage } = useCoverageStore(isConfigured) as unknown as { refresh: () => void };
 
   // Persist one student column, then reconcile every screen. Throws on error so
   // EditableField surfaces it as a toast (brief §5). updateStudent only rebuilds

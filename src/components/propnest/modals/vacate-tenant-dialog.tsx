@@ -14,9 +14,8 @@ import { Loader2Icon } from "lucide-react";
 import { useLabels } from "@/lib/vertical-labels";
 // Engine modules (brief §3) — consumed without modification.
 import { useData } from "@/parts/p1_imports_context.jsx";
-import { useCoverageStore } from "@/hooks/useCoverageStore.js";
+import { usePortfolioCoverage } from "../coverage-context";
 import { removeStudent } from "@/services/studentService.js";
-import { isConfigured } from "@/lib/supabase";
 
 export type VacateTenantDialogProps = {
   open: boolean;
@@ -36,7 +35,7 @@ export function VacateTenantDialog({
 }: VacateTenantDialogProps) {
   const labels = useLabels();
   const { refresh: refreshData } = useData() as unknown as { refresh: () => void };
-  const { refresh: refreshCoverage } = useCoverageStore(isConfigured) as unknown as { refresh: () => void };
+  const { refresh: refreshCoverage } = usePortfolioCoverage() as unknown as { refresh: () => void };
   const [submitting, setSubmitting] = useState(false);
 
   const handleConfirm = async () => {

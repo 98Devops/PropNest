@@ -15,9 +15,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 // Engine modules (brief §3) — consumed without modification.
 import { useAuth, useData, getSettings, updateSetting } from "@/parts/p1_imports_context.jsx";
-import { useCoverageStore } from "@/hooks/useCoverageStore.js";
+import { usePortfolioCoverage } from "./coverage-context";
 import { repairAllStudentsCoverage } from "@/services/coverageRepairService.js";
-import { isConfigured } from "@/lib/supabase";
 
 const KEY = "propnest:theme";
 
@@ -202,7 +201,7 @@ function SystemSettingsPanel() {
 /** §15 #4 — admin maintenance: rebuild every active occupant's coverage from the ledger. */
 function MaintenancePanel() {
   const { refresh: refreshData } = useData() as unknown as { refresh: () => void };
-  const { refresh: refreshCoverage } = useCoverageStore(isConfigured) as unknown as { refresh: () => void };
+  const { refresh: refreshCoverage } = usePortfolioCoverage() as unknown as { refresh: () => void };
   const [running, setRunning] = useState(false);
 
   const handleRepair = async () => {

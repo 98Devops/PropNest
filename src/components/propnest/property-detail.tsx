@@ -7,7 +7,7 @@ import { RoomRow } from "./room-row";
 import { Panel } from "./panel";
 import { StatCard } from "./stat-card";
 import { DeltaPill } from "./delta-pill";
-import { usePortfolioCoverage, type PortfolioRow } from "./use-portfolio";
+import { usePortfolioCoverage, usePortfolioAttention, type PortfolioRow } from "./use-portfolio";
 import { RecordPaymentSheet } from "./modals/record-payment-sheet";
 import { AddTenantSheet } from "./modals/add-tenant-sheet";
 import { AddRoomSheet } from "./modals/add-room-sheet";
@@ -28,6 +28,7 @@ export function PropertyDetail({
   const [addTenantOpen, setAddTenantOpen] = useState(false);
   const [addRoomOpen, setAddRoomOpen] = useState(false);
   const { coverageMap, loading: coverageLoading } = usePortfolioCoverage();
+  const { rows: attentionRows } = usePortfolioAttention();
   const labels = useLabels();
   const auth = useAuth() as unknown as { user?: { role?: string } | null } | null;
   const role = auth?.user?.role?.toUpperCase();
@@ -74,7 +75,10 @@ export function PropertyDetail({
   const occPct = property.totalBeds > 0
     ? Math.round((property.students / property.totalBeds) * 100)
     : 0;
-  const attentionCount = property.overdue.length;
+  // Coverage-derived attention for THIS property (matches dashboard / finance).
+  const propAttention = attentionRows.filter((r) => r.property === property.name);
+  const attentionCount = propAttention.length;
+  const attentionOutstanding = propAttention.reduce((s, r) => s + r.outstanding, 0);
 
   return (
     <div className="space-y-6">
@@ -165,7 +169,7 @@ export function PropertyDetail({
           delta={attentionCount > 0
             ? <DeltaPill tone="negative">need follow-up</DeltaPill>
             : <DeltaPill tone="positive">all clear</DeltaPill>}
-          caption={attentionCount === 0 ? "Coverage up to date" : `${money(property.overdue.reduce((s, o) => s + o.balance, 0))} outstanding`}
+          caption={attentionCount === 0 ? "Coverage up to date" : `${money(attentionOutstanding)} outstanding`}
         />
       </section>
 

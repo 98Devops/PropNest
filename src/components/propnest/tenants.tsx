@@ -7,7 +7,7 @@ import { StatCard } from "./stat-card";
 import { DeltaPill } from "./delta-pill";
 import { CoverageStatusBadge, coverageSubLabel } from "./coverage";
 import { money } from "./fmt";
-import { usePortfolio, usePortfolioCoverage } from "./use-portfolio";
+import { usePortfolio, usePortfolioCoverage, usePortfolioAttention } from "./use-portfolio";
 import { useNav } from "@/lib/propnest-nav";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,7 @@ const FILTERS: { key: Filter; label: string }[] = [
 export function Tenants() {
   const { allTenants, totals } = usePortfolio();
   const { coverageMap, loading } = usePortfolioCoverage();
+  const { count: attentionCount, totalOutstanding } = usePortfolioAttention();
   const { openProperty, openTenant } = useNav();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("ALL");
@@ -42,10 +43,6 @@ export function Tenants() {
       });
   }, [allTenants, coverageMap, search, filter]);
 
-  const overdueBalance = allTenants.reduce(
-    (s, t) => (coverageMap.get(t.id)?.status === "OVERDUE" ? s + t.balance : s),
-    0,
-  );
 
   return (
     <div className="space-y-6">
@@ -71,21 +68,21 @@ export function Tenants() {
         />
         <StatCard
           label="Coverage current"
-          value={String(allTenants.length - totals.attentionCount)}
+          value={String(Math.max(0, allTenants.length - attentionCount))}
           caption="paid through future"
         />
         <StatCard
           label="Needs attention"
-          value={String(totals.attentionCount)}
-          delta={totals.attentionCount > 0
-            ? <DeltaPill tone="negative">{totals.attentionCount}</DeltaPill>
+          value={String(attentionCount)}
+          delta={attentionCount > 0
+            ? <DeltaPill tone="negative">{attentionCount}</DeltaPill>
             : <DeltaPill tone="positive">0</DeltaPill>}
-          caption={totals.attentionCount === 0 ? "All up to date" : "Overdue / due today / expiring soon"}
+          caption={attentionCount === 0 ? "All up to date" : "Overdue / due today / expiring soon"}
         />
         <StatCard
-          label="Outstanding balance"
-          value={money(overdueBalance)}
-          caption="Across overdue tenants"
+          label="Outstanding (coverage)"
+          value={money(totalOutstanding)}
+          caption="Days overdue × daily rate"
         />
       </section>
 

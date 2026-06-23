@@ -23,9 +23,8 @@ import { Loader2Icon } from "lucide-react";
 import { useLabels } from "@/lib/vertical-labels";
 // Engine modules (brief §3) — consumed without modification.
 import { useData, useAuth } from "@/parts/p1_imports_context.jsx";
-import { useCoverageStore } from "@/hooks/useCoverageStore.js";
+import { usePortfolioCoverage } from "../coverage-context";
 import { recordPaymentWithCoverage } from "@/services/coverageDatabaseService.js";
-import { isConfigured } from "@/lib/supabase";
 import { usePortfolio } from "../use-portfolio";
 
 type PaymentResult = {
@@ -64,7 +63,7 @@ export function RecordPaymentSheet({
   const labels = useLabels();
   const { allTenants } = usePortfolio();
   const { refresh: refreshData } = useData() as unknown as { refresh: () => void };
-  const { refresh: refreshCoverage } = useCoverageStore(isConfigured) as unknown as { refresh: () => void };
+  const { refresh: refreshCoverage } = usePortfolioCoverage() as unknown as { refresh: () => void };
   const { user } = useAuth() as unknown as { user?: { id?: string } | null };
 
   const tenants = useMemo(

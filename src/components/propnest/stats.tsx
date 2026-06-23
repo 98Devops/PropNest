@@ -1,10 +1,13 @@
 import { usePortfolio } from "./use-portfolio";
+import { usePortfolioAttention } from "./coverage-context";
 import { money } from "./fmt";
 import { StatCard } from "./stat-card";
 import { DeltaPill } from "./delta-pill";
 
 export function PropNestStats() {
   const { totals } = usePortfolio();
+  // Coverage-derived attention (matches Finance/Tenants), not month-based overdue.
+  const { count: attentionCount } = usePortfolioAttention();
 
   return (
     <>
@@ -28,12 +31,12 @@ export function PropNestStats() {
       <StatCard
         label="Outstanding"
         value={money(totals.outstanding)}
-        delta={totals.attentionCount > 0 ? (
-          <DeltaPill tone="negative">{totals.attentionCount}</DeltaPill>
+        delta={attentionCount > 0 ? (
+          <DeltaPill tone="negative">{attentionCount}</DeltaPill>
         ) : (
           <DeltaPill tone="positive">0</DeltaPill>
         )}
-        caption={totals.attentionCount === 0 ? "Nothing needs attention" : `${totals.attentionCount} tenant${totals.attentionCount === 1 ? "" : "s"} need attention`}
+        caption={attentionCount === 0 ? "Nothing needs attention" : `${attentionCount} tenant${attentionCount === 1 ? "" : "s"} need attention`}
       />
       <StatCard
         label="Occupancy"

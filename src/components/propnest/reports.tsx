@@ -21,10 +21,11 @@ export function Reports() {
       toast.info("Nothing to export", { description: "Add a property first." });
       return;
     }
-    const headers = ["Property", "Location", "Rooms", "Tenants", "Bed capacity", "Collected", "Expected", "Outstanding", "Rate %"] as const;
+    const headers = ["Property", "Location", "Rooms", "Tenants", "Bed capacity", "Vacant", "Occupancy %", "Collected", "Expected", "Outstanding", "Rate %"] as const;
     const rows = properties.map((p) => {
       const rate = p.expected > 0 ? Math.round((p.collected / p.expected) * 100) : 0;
-      return [p.name, p.location, p.rooms.length, p.students, p.totalBeds, p.collected, p.expected, Math.max(0, p.expected - p.collected), rate];
+      const occ = p.totalBeds > 0 ? Math.round((p.students / p.totalBeds) * 100) : 0;
+      return [p.name, p.location, p.rooms.length, p.students, p.totalBeds, p.vacantBeds, occ, p.collected, p.expected, Math.max(0, p.expected - p.collected), rate];
     });
     downloadCsv(`PropNest_portfolio_${timestamp()}.csv`, headers, rows);
     toast.success("Portfolio CSV downloaded", { description: `${rows.length} propert${rows.length === 1 ? "y" : "ies"} exported.` });
@@ -106,6 +107,8 @@ export function Reports() {
               <TableHead>Location</TableHead>
               <TableHead className="text-right tabular-nums">Rooms</TableHead>
               <TableHead className="text-right tabular-nums">Tenants</TableHead>
+              <TableHead className="text-right tabular-nums">Vacant</TableHead>
+              <TableHead className="text-right tabular-nums">Occ.</TableHead>
               <TableHead className="text-right tabular-nums">Collected</TableHead>
               <TableHead className="text-right tabular-nums">Expected</TableHead>
               <TableHead className="pe-5 text-right tabular-nums">Rate</TableHead>
@@ -114,12 +117,15 @@ export function Reports() {
           <TableBody>
             {properties.map((p) => {
               const pct = p.expected > 0 ? Math.round((p.collected / p.expected) * 100) : 0;
+              const occ = p.totalBeds > 0 ? Math.round((p.students / p.totalBeds) * 100) : 0;
               return (
                 <TableRow key={p.id} className="h-12">
                   <TableCell className="ps-5 font-medium" style={{ color: p.color }}>{p.name}</TableCell>
                   <TableCell className="text-muted-foreground">{p.location}</TableCell>
                   <TableCell className="text-right tabular-nums">{p.rooms.length}</TableCell>
                   <TableCell className="text-right tabular-nums">{p.students}/{p.totalBeds}</TableCell>
+                  <TableCell className="text-right tabular-nums">{p.vacantBeds}</TableCell>
+                  <TableCell className="text-right tabular-nums">{occ}%</TableCell>
                   <TableCell className="text-right tabular-nums">{money(p.collected)}</TableCell>
                   <TableCell className="text-right tabular-nums">{money(p.expected)}</TableCell>
                   <TableCell className="pe-5 text-right tabular-nums font-semibold">{pct}%</TableCell>

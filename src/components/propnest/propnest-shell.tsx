@@ -9,6 +9,7 @@ import { Reports } from "./reports";
 import { CalendarScreen } from "./calendar";
 import { Settings } from "./settings";
 import { TenantProfileDrawer } from "./modals/tenant-profile-drawer";
+import { CoverageProvider } from "./coverage-context";
 import { Loader2Icon } from "lucide-react";
 // Engine modules (brief §3) — auth gate reuses the existing provider + login.
 import { useAuth } from "@/parts/p1_imports_context.jsx";
@@ -80,15 +81,17 @@ export function PropNestShell() {
   }
 
   return (
-    <NavProvider initial={readHashScreen()}>
-      <AppShell>
-        <div className="bg-page-gradient -m-4 min-h-[calc(100vh-3.5rem)] p-4 md:-m-6 md:p-6">
-          <ScreenSwitcher />
-        </div>
-        {/* Shell-level drawer — any screen can call openTenant(id) */}
-        <TenantProfileDrawer />
-      </AppShell>
-    </NavProvider>
+    <CoverageProvider>
+      <NavProvider initial={readHashScreen()}>
+        <AppShell>
+          <div className="bg-page-gradient -m-4 min-h-[calc(100vh-3.5rem)] p-4 md:-m-6 md:p-6">
+            <ScreenSwitcher />
+          </div>
+          {/* Shell-level drawer — any screen can call openTenant(id) */}
+          <TenantProfileDrawer />
+        </AppShell>
+      </NavProvider>
+    </CoverageProvider>
   );
 }
 

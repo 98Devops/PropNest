@@ -3,7 +3,7 @@ import { Panel } from "./panel";
 import { StatCard } from "./stat-card";
 import { DeltaPill } from "./delta-pill";
 import { MonthlyTrend } from "./monthly-trend";
-import { CoverageStatusBadge } from "./coverage";
+import { CoverageStatusBadge, coverageSubLabel } from "./coverage";
 import { money } from "./fmt";
 import { usePortfolio, usePortfolioCoverage } from "./use-portfolio";
 import { useNav } from "@/lib/propnest-nav";
@@ -156,7 +156,12 @@ export function Finance() {
                     <span className="text-muted-foreground/70"> · {t.room}</span>
                   </button>
                 </TableCell>
-                <TableCell><CoverageStatusBadge coverage={t.coverage} /></TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <CoverageStatusBadge coverage={t.coverage} />
+                    <span className="text-xs text-muted-foreground">{coverageSubLabel(t.coverage)}</span>
+                  </div>
+                </TableCell>
                 <TableCell className="text-right tabular-nums">{money(t.rent)}</TableCell>
                 <TableCell className="pe-5 text-right tabular-nums">
                   <span className={cn("font-semibold", t.balance > 0 ? "text-rose-600 dark:text-rose-400" : "text-foreground")}>

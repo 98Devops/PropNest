@@ -1,4 +1,5 @@
 import { PropNestStats } from "./stats";
+import { CoverageStrip } from "./coverage-strip";
 import { PropNestAttention } from "./attention";
 import { PropNestActivity } from "./activity";
 import { PropertyMix } from "./property-mix";
@@ -21,6 +22,8 @@ export function PropNestDashboard() {
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <PropNestStats />
       </section>
+
+      <CoverageStrip />
 
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-4">

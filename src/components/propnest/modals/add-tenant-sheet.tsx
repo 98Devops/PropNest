@@ -23,9 +23,8 @@ import { Loader2Icon } from "lucide-react";
 import { useLabels } from "@/lib/vertical-labels";
 // Engine modules (brief §3) — consumed without modification.
 import { useData } from "@/parts/p1_imports_context.jsx";
-import { useCoverageStore } from "@/hooks/useCoverageStore.js";
+import { usePortfolioCoverage } from "../coverage-context";
 import { addStudent } from "@/services/studentService.js";
-import { isConfigured } from "@/lib/supabase";
 import type { PortfolioRow } from "../use-portfolio";
 import { money } from "../fmt";
 
@@ -48,7 +47,7 @@ export type AddTenantSheetProps = {
 export function AddTenantSheet({ open, onOpenChange, property }: AddTenantSheetProps) {
   const labels = useLabels();
   const { refresh: refreshData } = useData() as unknown as { refresh: () => void };
-  const { refresh: refreshCoverage } = useCoverageStore(isConfigured) as unknown as { refresh: () => void };
+  const { refresh: refreshCoverage } = usePortfolioCoverage() as unknown as { refresh: () => void };
 
   const rooms = property.rooms.map((r) => {
     const occupied = r.students.filter((s) => s.status !== "VACANT" && s.status !== "VACATED").length;
