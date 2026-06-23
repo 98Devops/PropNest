@@ -9,6 +9,18 @@ import { Reports } from "./reports";
 import { CalendarScreen } from "./calendar";
 import { Settings } from "./settings";
 import { TenantProfileDrawer } from "./modals/tenant-profile-drawer";
+import { Loader2Icon } from "lucide-react";
+// Engine modules (brief §3) — auth gate reuses the existing provider + login.
+import { useAuth } from "@/parts/p1_imports_context.jsx";
+import { LoginScreen } from "@/parts/p3_modals.jsx";
+import { isConfigured } from "@/lib/supabase";
+
+type AuthCtx = {
+  user: { id?: string; email?: string; role?: string } | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<{ data: unknown; error: { message: string } | null }>;
+  setUser: (u: unknown) => void;
+};
 
 const VALID_SCREENS: ScreenKey[] = [
   "dashboard", "properties", "tenants", "finance", "reports", "calendar", "settings",
@@ -42,6 +54,30 @@ function ScreenSwitcher() {
 }
 
 export function PropNestShell() {
+  // Auth gate — mirrors legacy App.jsx so a signed-out user gets the login screen
+  // instead of an empty dashboard. Reuses the existing LoginScreen + auth context.
+  const auth = useAuth() as unknown as AuthCtx;
+
+  const handleLogin = async (emailOrUser: string, password: string) => {
+    if (!isConfigured) { auth.setUser(emailOrUser); return { data: emailOrUser, error: null }; }
+    return auth.login(emailOrUser, password);
+  };
+
+  if (auth.loading) {
+    return (
+      <div className="bg-page-gradient flex min-h-screen items-center justify-center">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2Icon className="size-5 animate-spin text-brand-blue" />
+          <span className="text-sm font-medium">Loading PropNest…</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!auth.user) {
+    return <LoginScreen onLogin={handleLogin} isConfigured={isConfigured} />;
+  }
+
   return (
     <NavProvider initial={readHashScreen()}>
       <AppShell>
