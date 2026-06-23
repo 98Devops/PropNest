@@ -24,7 +24,7 @@ const FILTERS: { key: Filter; label: string }[] = [
 export function Tenants() {
   const { allTenants, totals } = usePortfolio();
   const { coverageMap, loading } = usePortfolioCoverage();
-  const { openProperty } = useNav();
+  const { openProperty, openTenant } = useNav();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("ALL");
 
@@ -138,7 +138,15 @@ export function Tenants() {
                 </TableRow>
               ) : rows.map((t) => (
                 <TableRow key={t.id} className="h-12">
-                  <TableCell className="ps-5 font-medium">{t.name}</TableCell>
+                  <TableCell className="ps-5 font-medium">
+                    <button
+                      type="button"
+                      onClick={() => openTenant(t.id)}
+                      className="text-left hover:underline"
+                    >
+                      {t.name}
+                    </button>
+                  </TableCell>
                   <TableCell>
                     <button
                       type="button"

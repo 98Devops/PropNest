@@ -8,6 +8,7 @@ import { Finance } from "./finance";
 import { Reports } from "./reports";
 import { CalendarScreen } from "./calendar";
 import { Settings } from "./settings";
+import { TenantProfileDrawer } from "./modals/tenant-profile-drawer";
 
 const VALID_SCREENS: ScreenKey[] = [
   "dashboard", "properties", "tenants", "finance", "reports", "calendar", "settings",
@@ -47,6 +48,8 @@ export function PropNestShell() {
         <div className="bg-page-gradient -m-4 min-h-[calc(100vh-3.5rem)] p-4 md:-m-6 md:p-6">
           <ScreenSwitcher />
         </div>
+        {/* Shell-level drawer — any screen can call openTenant(id) */}
+        <TenantProfileDrawer />
       </AppShell>
     </NavProvider>
   );

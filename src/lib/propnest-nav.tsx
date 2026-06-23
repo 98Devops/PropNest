@@ -17,6 +17,11 @@ type NavContextValue = {
   setSelectedPropertyId: (id: string | null) => void;
   /** Helper: jump straight to a property detail from anywhere (e.g. Dashboard). */
   openProperty: (id: string) => void;
+  /** Tenant whose profile drawer should be open. */
+  selectedTenantId: string | null;
+  /** Open the tenant profile drawer from anywhere. */
+  openTenant: (id: string) => void;
+  closeTenant: () => void;
 };
 
 const NavContext = createContext<NavContextValue | null>(null);
@@ -24,6 +29,7 @@ const NavContext = createContext<NavContextValue | null>(null);
 export function NavProvider({ children, initial = "dashboard" }: { children: ReactNode; initial?: ScreenKey }) {
   const [screen, setScreen] = useState<ScreenKey>(initial);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
 
   const value = useMemo<NavContextValue>(
     () => ({
@@ -39,8 +45,11 @@ export function NavProvider({ children, initial = "dashboard" }: { children: Rea
         setScreen("properties");
         if (typeof window !== "undefined") window.location.hash = "properties";
       },
+      selectedTenantId,
+      openTenant: (id) => setSelectedTenantId(id),
+      closeTenant: () => setSelectedTenantId(null),
     }),
-    [screen, selectedPropertyId],
+    [screen, selectedPropertyId, selectedTenantId],
   );
 
   return <NavContext.Provider value={value}>{children}</NavContext.Provider>;

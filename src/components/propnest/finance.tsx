@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 export function Finance() {
   const { allTenants, totals } = usePortfolio();
   const { coverageMap } = usePortfolioCoverage();
-  const { openProperty } = useNav();
+  const { openProperty, openTenant } = useNav();
 
   const buckets = useMemo(() => {
     const groups: Record<string, { count: number; balance: number }> = {
@@ -137,7 +137,15 @@ export function Finance() {
               </TableRow>
             ) : outstanding.map((t) => (
               <TableRow key={t.id} className="h-12">
-                <TableCell className="ps-5 font-medium">{t.name}</TableCell>
+                <TableCell className="ps-5 font-medium">
+                  <button
+                    type="button"
+                    onClick={() => openTenant(t.id)}
+                    className="text-left hover:underline"
+                  >
+                    {t.name}
+                  </button>
+                </TableCell>
                 <TableCell>
                   <button
                     type="button"

@@ -6,6 +6,7 @@ import { money } from "./fmt";
 import { CoverageStatusBadge, coverageSubLabel } from "./coverage";
 import type { PortfolioRow } from "./use-portfolio";
 import { RecordPaymentSheet } from "./modals/record-payment-sheet";
+import { useNav } from "@/lib/propnest-nav";
 
 type Room = PortfolioRow["rooms"][number];
 type CoverageMap = Map<string, { status: string; daysRemaining?: number; daysOverdue?: number; coverageEnd?: string }>;
@@ -19,6 +20,7 @@ export function RoomRow({
 }) {
   const [open, setOpen] = useState(false);
   const [payFor, setPayFor] = useState<string | null>(null);
+  const { openTenant } = useNav();
 
   const real = room.students.filter((s) => s.status !== "VACANT" && s.status !== "VACATED");
   const vacant = Math.max(0, room.beds - real.length);
@@ -84,13 +86,22 @@ export function RoomRow({
                 const cov = coverageMap.get(s.id) ?? null;
                 return (
                   <li key={s.id} className="flex items-center gap-3 py-3">
-                    <span className="bg-background text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full">
+                    <button
+                      type="button"
+                      onClick={() => openTenant(s.id)}
+                      className="bg-background text-muted-foreground flex size-8 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-muted"
+                      aria-label={`Open ${s.name} profile`}
+                    >
                       <UserIcon className="size-4" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-medium text-foreground">{s.name}</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openTenant(s.id)}
+                      className="min-w-0 flex-1 text-left"
+                    >
+                      <div className="truncate text-sm font-medium text-foreground hover:underline">{s.name}</div>
                       <div className="text-xs text-muted-foreground">{coverageSubLabel(cov)}</div>
-                    </div>
+                    </button>
                     <div className="flex items-center gap-2 text-right">
                       <div>
                         <div className="text-xs tabular-nums text-muted-foreground">

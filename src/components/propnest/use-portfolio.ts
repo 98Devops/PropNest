@@ -36,6 +36,9 @@ export type PortfolioRow = {
       balance: number;
       status: string;
       date: string;
+      notes?: string | null;
+      phone?: string | null;
+      idNumber?: string | null;
       payHistory: Array<{
         id: string;
         amount: number;
@@ -210,7 +213,23 @@ export function usePortfolio() {
     return months;
   }, [properties]);
 
-  return { properties, totals, recentPayments, attention, allTenants, monthlyTrend, loading };
+  /**
+   * Locate a tenant + their property + room in one walk. Returns the full
+   * student record (with payHistory) so the profile drawer doesn't need a
+   * second fetch.
+   */
+  const findTenant = (id: string | null) => {
+    if (!id) return null;
+    for (const p of properties) {
+      for (const r of p.rooms) {
+        const s = r.students.find((x) => x.id === id);
+        if (s) return { tenant: s, property: p, room: r };
+      }
+    }
+    return null;
+  };
+
+  return { properties, totals, recentPayments, attention, allTenants, monthlyTrend, findTenant, loading };
 }
 
 /**
