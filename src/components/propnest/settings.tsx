@@ -33,7 +33,7 @@ export function Settings() {
           </p>
         </div>
         <Button asChild variant="outline">
-          <a href={window.location.pathname}>
+          <a href={`${window.location.pathname}?legacy=1`}>
             <ExternalLinkIcon /> Open full settings (legacy)
           </a>
         </Button>

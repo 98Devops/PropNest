@@ -53,7 +53,7 @@ export function Reports() {
             <Download /> Monthly CSV
           </Button>
           <Button asChild variant="outline">
-            <a href={window.location.pathname} target="_self">
+            <a href={`${window.location.pathname}?legacy=1#reports`} target="_self">
               <ExternalLinkIcon /> Open full reports (legacy)
             </a>
           </Button>

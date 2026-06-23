@@ -617,7 +617,8 @@ function ReportDownloadModal({ props, user, onClose }) {
    ROOT APP — wrapped with providers
 ═══════════════════════════════════════════════════════════ */
 export default function App() {
-  // Providers are now hoisted to src/main.jsx so the new PropNest shell
-  // (mounted at ?efferd=1) can read the same auth + data contexts.
+  // Providers are now hoisted to src/main.jsx. The new PropNest shell is the
+  // default; this legacy App is reachable via /?legacy=1 as a fallback for
+  // features not yet fused (inline edits, payment edit/delete, etc.).
   return <AppInner />;
 }
