@@ -7,11 +7,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Download, ExternalLinkIcon } from "lucide-react";
 import { money, moneyCompact } from "./fmt";
 import { usePortfolio } from "./use-portfolio";
+import { DataQuality } from "./data-quality";
 import { downloadCsv, timestamp } from "@/lib/csv";
 import { toast } from "sonner";
+// Engine module (brief §3) — consumed without modification.
+import { useAuth } from "@/parts/p1_imports_context.jsx";
 
 export function Reports() {
   const { properties, totals, monthlyTrend } = usePortfolio();
+  const auth = useAuth() as unknown as { user?: { role?: string } | null } | null;
+  const isAdmin = auth?.user?.role?.toUpperCase() === "ADMIN";
 
   const best = [...monthlyTrend].sort((a, b) => b.collected - a.collected)[0];
   const total12mo = monthlyTrend.reduce((s, m) => s + m.collected, 0);
@@ -135,6 +140,8 @@ export function Reports() {
           </TableBody>
         </Table>
       </Panel>
+
+      {isAdmin && <DataQuality />}
     </div>
   );
 }

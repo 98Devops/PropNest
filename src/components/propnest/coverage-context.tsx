@@ -2,7 +2,7 @@ import { createContext, useContext, useMemo, type ReactNode } from "react";
 // Engine modules (brief §3) — consumed without modification.
 import { useCoverageStore } from "@/hooks/useCoverageStore.js";
 import { classifyStudent } from "@/services/statusClassifier.js";
-import { buildAttentionList, countAttentionByProperty } from "@/services/dashboardAttention.js";
+import { buildAttentionList, countAttentionByProperty, buildFinanceRecords } from "@/services/dashboardAttention.js";
 import { isConfigured } from "@/lib/supabase";
 
 /**
@@ -107,5 +107,20 @@ export function usePortfolioAttention() {
       ready: Array.isArray(students),
       loading,
     };
+  }, [students, loading]);
+}
+
+/**
+ * Every ACTIVE tenant as a coverage record (status / outstanding / days / coverage
+ * end), via the same engine builder the legacy Finances page uses. The Finance
+ * screen filters and sorts these itself, so its status chips and amounts can never
+ * disagree with the dashboard.
+ */
+export function usePortfolioFinance() {
+  const { students, loading } = useCoverageStoreCtx();
+  return useMemo(() => {
+    const list = (students ?? []) as unknown[] as Array<Record<string, unknown>>;
+    const records = buildFinanceRecords(list) as AttentionRow[];
+    return { records, ready: Array.isArray(students), loading };
   }, [students, loading]);
 }

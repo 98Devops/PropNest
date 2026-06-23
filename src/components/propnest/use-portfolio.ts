@@ -6,7 +6,7 @@ import { buildProps } from "@/parts/p2_helpers.jsx";
 // Coverage now flows through the shared CoverageProvider (one fetch for the whole
 // tree) — re-exported here so existing `import { usePortfolioCoverage } from "./use-portfolio"`
 // call-sites keep working unchanged.
-export { usePortfolioCoverage, usePortfolioAttention } from "./coverage-context";
+export { usePortfolioCoverage, usePortfolioAttention, usePortfolioFinance } from "./coverage-context";
 
 export type PortfolioRow = {
   id: string;
