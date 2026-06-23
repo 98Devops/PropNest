@@ -7,12 +7,35 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Download, ExternalLinkIcon } from "lucide-react";
 import { money, moneyCompact } from "./fmt";
 import { usePortfolio } from "./use-portfolio";
+import { downloadCsv, timestamp } from "@/lib/csv";
+import { toast } from "sonner";
 
 export function Reports() {
   const { properties, totals, monthlyTrend } = usePortfolio();
 
   const best = [...monthlyTrend].sort((a, b) => b.collected - a.collected)[0];
   const total12mo = monthlyTrend.reduce((s, m) => s + m.collected, 0);
+
+  const exportPortfolioCsv = () => {
+    if (properties.length === 0) {
+      toast.info("Nothing to export", { description: "Add a property first." });
+      return;
+    }
+    const headers = ["Property", "Location", "Rooms", "Tenants", "Bed capacity", "Collected", "Expected", "Outstanding", "Rate %"] as const;
+    const rows = properties.map((p) => {
+      const rate = p.expected > 0 ? Math.round((p.collected / p.expected) * 100) : 0;
+      return [p.name, p.location, p.rooms.length, p.students, p.totalBeds, p.collected, p.expected, Math.max(0, p.expected - p.collected), rate];
+    });
+    downloadCsv(`PropNest_portfolio_${timestamp()}.csv`, headers, rows);
+    toast.success("Portfolio CSV downloaded", { description: `${rows.length} propert${rows.length === 1 ? "y" : "ies"} exported.` });
+  };
+
+  const exportMonthlyCsv = () => {
+    const headers = ["Month", "Collected"] as const;
+    const rows = monthlyTrend.map((m) => [`${m.key} (${m.label})`, m.collected]);
+    downloadCsv(`PropNest_monthly_${timestamp()}.csv`, headers, rows);
+    toast.success("Monthly trend CSV downloaded", { description: `${rows.length} months exported.` });
+  };
 
   return (
     <div className="space-y-6">
@@ -25,11 +48,16 @@ export function Reports() {
             Portfolio-wide performance snapshot for the past 12 months.
           </p>
         </div>
-        <Button asChild variant="outline">
-          <a href={window.location.pathname} target="_self">
-            <ExternalLinkIcon /> Open full reports (legacy)
-          </a>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={exportMonthlyCsv}>
+            <Download /> Monthly CSV
+          </Button>
+          <Button asChild variant="outline">
+            <a href={window.location.pathname} target="_self">
+              <ExternalLinkIcon /> Open full reports (legacy)
+            </a>
+          </Button>
+        </div>
       </header>
 
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -67,7 +95,7 @@ export function Reports() {
             <h3 className="text-base font-semibold text-foreground">By property</h3>
             <p className="text-xs text-muted-foreground">Per-property snapshot for the current month.</p>
           </div>
-          <Button variant="outline" size="sm" disabled title="CSV export wired in next slice">
+          <Button variant="outline" size="sm" onClick={exportPortfolioCsv}>
             <Download /> Export CSV
           </Button>
         </header>

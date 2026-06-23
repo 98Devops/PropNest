@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeftIcon, BedSingleIcon, PlusIcon, SearchIcon, UserPlusIcon } from "lucide-react";
+import { ArrowLeftIcon, BedSingleIcon, Download, PlusIcon, SearchIcon, UserPlusIcon } from "lucide-react";
 import { money, moneyCompact } from "./fmt";
 import { RoomRow } from "./room-row";
 import { Panel } from "./panel";
@@ -13,6 +13,8 @@ import { AddTenantSheet } from "./modals/add-tenant-sheet";
 import { AddRoomSheet } from "./modals/add-room-sheet";
 import { useLabels } from "@/lib/vertical-labels";
 import { useAuth } from "@/parts/p1_imports_context.jsx";
+import { downloadCsv, slug, timestamp } from "@/lib/csv";
+import { toast } from "sonner";
 
 export function PropertyDetail({
   property,
@@ -30,6 +32,31 @@ export function PropertyDetail({
   const auth = useAuth() as unknown as { user?: { role?: string } | null } | null;
   const role = auth?.user?.role?.toUpperCase();
   const isAdmin = role === "ADMIN";
+
+  const exportCsv = () => {
+    const headers = [
+      labels.property, labels.unit, labels.occupant, "Phone", "National ID",
+      "Status", "Coverage", "Rent", "Paid (month)", "Balance", "Check-in", "Notes",
+    ] as const;
+    const rows: Array<readonly unknown[]> = [];
+    for (const r of property.rooms) {
+      for (const s of r.students) {
+        if (s.status === "VACANT" || s.status === "VACATED") continue;
+        const cov = coverageMap.get(s.id);
+        rows.push([
+          property.name, r.no, s.name, s.phone ?? "", s.idNumber ?? "",
+          s.status, cov?.status ?? "EXCLUDED", r.rent, s.paid, s.balance,
+          s.date && s.date !== "—" ? s.date : "", s.notes ?? "",
+        ]);
+      }
+    }
+    if (rows.length === 0) {
+      toast.info("Nothing to export", { description: `No active ${labels.occupantPlural.toLowerCase()} in ${property.name}.` });
+      return;
+    }
+    downloadCsv(`PropNest_${slug(property.name)}_${timestamp()}.csv`, headers, rows);
+    toast.success("CSV downloaded", { description: `${rows.length} ${rows.length === 1 ? labels.occupant.toLowerCase() : labels.occupantPlural.toLowerCase()} from ${property.name}.` });
+  };
 
   const filteredRooms = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -72,6 +99,9 @@ export function PropertyDetail({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" onClick={exportCsv} disabled={property.students === 0}>
+            <Download /> Export CSV
+          </Button>
           {isAdmin && (
             <Button variant="outline" onClick={() => setAddRoomOpen(true)}>
               <BedSingleIcon /> Add {labels.unit.toLowerCase()}
