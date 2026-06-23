@@ -77,7 +77,10 @@ create table if not exists payments (
   amount         numeric(10,2) not null,
   payment_date   date not null,
   payment_method text default 'Cash'
-    check (payment_method in ('Cash','EcoCash','Bank Transfer','Zipit','Swipe')),
+    -- Superset: keeps the original Zimbabwe methods (EcoCash/Zipit/Swipe) so a
+    -- port onto Trevis's live data never rejects an existing payment, plus the
+    -- generic methods the new UI offers. Widen here (additive) rather than swap.
+    check (payment_method in ('Cash','EcoCash','Bank Transfer','Zipit','Swipe','Mobile Money','Card')),
   receipt_number text,
   month_year     text not null,  -- derived: 'YYYY-MM' format
   notes          text,
