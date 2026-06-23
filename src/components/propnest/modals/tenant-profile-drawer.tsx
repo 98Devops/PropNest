@@ -13,14 +13,21 @@ import {
 } from "@/components/ui/table";
 import {
   PlusIcon, UserMinusIcon, ExternalLinkIcon, PhoneIcon, IdCardIcon, CalendarIcon, BedSingleIcon, BuildingIcon,
+  UserIcon, StickyNoteIcon,
 } from "lucide-react";
 import { useNav } from "@/lib/propnest-nav";
 import { useLabels } from "@/lib/vertical-labels";
-import { useAuth } from "@/parts/p1_imports_context.jsx";
+// Engine modules (brief §3) — consumed without modification.
+import { useAuth, useData } from "@/parts/p1_imports_context.jsx";
+import { useCoverageStore } from "@/hooks/useCoverageStore.js";
+import { updateStudent } from "@/services/studentService.js";
+import { isConfigured } from "@/lib/supabase";
 import { usePortfolio, usePortfolioCoverage } from "../use-portfolio";
 import { CoverageStatusBadge, coverageSubLabel } from "../coverage";
+import { EditableField } from "../editable-field";
 import { money, formatDate } from "../fmt";
 import { RecordPaymentSheet } from "./record-payment-sheet";
+import { PaymentRowActions } from "./payment-row-actions";
 import { VacateTenantDialog } from "./vacate-tenant-dialog";
 
 /**
@@ -34,6 +41,21 @@ export function TenantProfileDrawer() {
   const labels = useLabels();
   const auth = useAuth() as unknown as { user?: { role?: string } | null } | null;
   const isAdmin = auth?.user?.role?.toUpperCase() === "ADMIN";
+  const { refresh: refreshData } = useData() as unknown as { refresh: () => void };
+  const { refresh: refreshCoverage } = useCoverageStore(isConfigured) as unknown as { refresh: () => void };
+
+  // Persist one student column, then reconcile every screen. Throws on error so
+  // EditableField surfaces it as a toast (brief §5). updateStudent only rebuilds
+  // coverage on room/status changes — these profile fields don't, so it's cheap.
+  const saveField = (column: string) => async (next: string) => {
+    if (!selectedTenantId) return;
+    const { error } = (await updateStudent(selectedTenantId, { [column]: next || null })) as {
+      error: { message: string } | null;
+    };
+    if (error) throw new Error(error.message);
+    refreshData();
+    refreshCoverage();
+  };
 
   const [payOpen, setPayOpen] = useState(false);
   const [vacateOpen, setVacateOpen] = useState(false);
@@ -112,17 +134,46 @@ export function TenantProfileDrawer() {
               />
             </section>
 
-            {/* Personal info */}
+            {/* Personal info — inline-editable (brief §15 #1) */}
             <section className="space-y-3 border-b p-5">
               <h3 className="text-sm font-semibold text-foreground">Details</h3>
-              <Row icon={<PhoneIcon className="size-4" />} label="Phone" value={tenant.phone ?? "—"} />
-              <Row icon={<IdCardIcon className="size-4" />} label="National ID" value={tenant.idNumber ?? "—"} />
-              <Row icon={<CalendarIcon className="size-4" />} label="Check-in" value={tenant.date && tenant.date !== "—" ? tenant.date : "—"} />
-              {tenant.notes && (
-                <div className="rounded-md border bg-muted/40 p-3 text-sm text-muted-foreground whitespace-pre-wrap">
-                  {tenant.notes}
-                </div>
-              )}
+              <EditableField
+                icon={<UserIcon className="size-4" />}
+                label={`${labels.occupant} name`}
+                value={tenant.name}
+                placeholder="Full name"
+                onSave={saveField("full_name")}
+              />
+              <EditableField
+                icon={<PhoneIcon className="size-4" />}
+                label="Phone"
+                type="tel"
+                value={tenant.phone}
+                placeholder="e.g. +1 555 0100"
+                onSave={saveField("phone")}
+              />
+              <EditableField
+                icon={<IdCardIcon className="size-4" />}
+                label="National ID"
+                value={tenant.idNumber}
+                placeholder="ID number"
+                onSave={saveField("national_id")}
+              />
+              <EditableField
+                icon={<CalendarIcon className="size-4" />}
+                label="Check-in"
+                type="date"
+                value={tenant.date && tenant.date !== "—" ? tenant.date : ""}
+                onSave={saveField("check_in_date")}
+              />
+              <EditableField
+                icon={<StickyNoteIcon className="size-4" />}
+                label="Notes"
+                type="textarea"
+                value={tenant.notes ?? ""}
+                placeholder="Anything to remember…"
+                onSave={saveField("notes")}
+              />
             </section>
 
             {/* Payment history */}
@@ -145,7 +196,8 @@ export function TenantProfileDrawer() {
                         <TableHead className="ps-4">Date</TableHead>
                         <TableHead>Method</TableHead>
                         <TableHead>Receipt</TableHead>
-                        <TableHead className="pe-4 text-right tabular-nums">Amount</TableHead>
+                        <TableHead className="text-right tabular-nums">Amount</TableHead>
+                        <TableHead className="pe-2 w-9" aria-label="Actions" />
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -154,7 +206,14 @@ export function TenantProfileDrawer() {
                           <TableCell className="ps-4 tabular-nums">{p.date ? formatDate(p.date) : "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{p.method ?? "—"}</TableCell>
                           <TableCell className="text-muted-foreground">{p.receipt ?? "—"}</TableCell>
-                          <TableCell className="pe-4 text-right tabular-nums font-semibold">{money(Number(p.amount))}</TableCell>
+                          <TableCell className="text-right tabular-nums font-semibold">{money(Number(p.amount))}</TableCell>
+                          <TableCell className="pe-2">
+                            <PaymentRowActions
+                              payment={p}
+                              canDelete={isAdmin}
+                              onChanged={() => { refreshData(); refreshCoverage(); }}
+                            />
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -219,14 +278,3 @@ function Kpi({ label, value, sub, tone }: {
   );
 }
 
-function Row({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-3 text-sm">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <span className="bg-brand-gradient-soft text-brand-blue flex size-7 items-center justify-center rounded-md">{icon}</span>
-        {label}
-      </div>
-      <span className="font-medium text-foreground">{value}</span>
-    </div>
-  );
-}
