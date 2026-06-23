@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeftIcon, PlusIcon, SearchIcon } from "lucide-react";
+import { ArrowLeftIcon, BedSingleIcon, PlusIcon, SearchIcon, UserPlusIcon } from "lucide-react";
 import { money, moneyCompact } from "./fmt";
 import { RoomRow } from "./room-row";
 import { Panel } from "./panel";
@@ -9,6 +9,10 @@ import { StatCard } from "./stat-card";
 import { DeltaPill } from "./delta-pill";
 import { usePortfolioCoverage, type PortfolioRow } from "./use-portfolio";
 import { RecordPaymentSheet } from "./modals/record-payment-sheet";
+import { AddTenantSheet } from "./modals/add-tenant-sheet";
+import { AddRoomSheet } from "./modals/add-room-sheet";
+import { useLabels } from "@/lib/vertical-labels";
+import { useAuth } from "@/parts/p1_imports_context.jsx";
 
 export function PropertyDetail({
   property,
@@ -19,7 +23,13 @@ export function PropertyDetail({
 }) {
   const [search, setSearch] = useState("");
   const [payOpen, setPayOpen] = useState(false);
+  const [addTenantOpen, setAddTenantOpen] = useState(false);
+  const [addRoomOpen, setAddRoomOpen] = useState(false);
   const { coverageMap, loading: coverageLoading } = usePortfolioCoverage();
+  const labels = useLabels();
+  const auth = useAuth() as unknown as { user?: { role?: string } | null } | null;
+  const role = auth?.user?.role?.toUpperCase();
+  const isAdmin = role === "ADMIN";
 
   const filteredRooms = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -61,9 +71,19 @@ export function PropertyDetail({
             {property.rooms.length} room{property.rooms.length === 1 ? "" : "s"} · {property.totalBeds} bed{property.totalBeds === 1 ? "" : "s"} · {property.students} tenant{property.students === 1 ? "" : "s"}
           </p>
         </div>
-        <Button variant="gradient" onClick={() => setPayOpen(true)} disabled={property.students === 0}>
-          <PlusIcon /> Record payment
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {isAdmin && (
+            <Button variant="outline" onClick={() => setAddRoomOpen(true)}>
+              <BedSingleIcon /> Add {labels.unit.toLowerCase()}
+            </Button>
+          )}
+          <Button variant="outline" onClick={() => setAddTenantOpen(true)}>
+            <UserPlusIcon /> {labels.addOccupant}
+          </Button>
+          <Button variant="gradient" onClick={() => setPayOpen(true)} disabled={property.students === 0}>
+            <PlusIcon /> Record payment
+          </Button>
+        </div>
       </header>
 
       <RecordPaymentSheet
@@ -71,6 +91,18 @@ export function PropertyDetail({
         onOpenChange={setPayOpen}
         propertyId={property.id}
       />
+      <AddTenantSheet
+        open={addTenantOpen}
+        onOpenChange={setAddTenantOpen}
+        property={property}
+      />
+      {isAdmin && (
+        <AddRoomSheet
+          open={addRoomOpen}
+          onOpenChange={setAddRoomOpen}
+          property={property}
+        />
+      )}
 
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard
