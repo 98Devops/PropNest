@@ -1,15 +1,30 @@
 import { Panel } from "./panel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLinkIcon, MoonIcon, SunIcon, UserIcon, BellIcon, ShieldIcon } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  ExternalLinkIcon, MoonIcon, SunIcon, UserIcon, BellIcon, ShieldIcon,
+  SlidersHorizontalIcon, WrenchIcon, Loader2Icon, SaveIcon,
+} from "lucide-react";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/parts/p1_imports_context.jsx";
+import { toast } from "sonner";
+// Engine modules (brief §3) — consumed without modification.
+import { useAuth, useData, getSettings, updateSetting } from "@/parts/p1_imports_context.jsx";
+import { useCoverageStore } from "@/hooks/useCoverageStore.js";
+import { repairAllStudentsCoverage } from "@/services/coverageRepairService.js";
+import { isConfigured } from "@/lib/supabase";
 
 const KEY = "propnest:theme";
 
 export function Settings() {
   const auth = useAuth() as { user?: { email?: string; role?: string } | null } | null;
   const user = auth?.user ?? null;
+  const isAdmin = user?.role?.toUpperCase() === "ADMIN";
   const [mode, setMode] = useState<"light" | "dark">(() => {
     if (typeof window === "undefined") return "light";
     const stored = window.localStorage.getItem(KEY);
@@ -83,6 +98,9 @@ export function Settings() {
         </div>
       </Panel>
 
+      {isAdmin && <SystemSettingsPanel />}
+      {isAdmin && <MaintenancePanel />}
+
       <Panel>
         <header className="border-b px-5 py-4">
           <h3 className="text-base font-semibold text-foreground">Notifications</h3>
@@ -98,6 +116,157 @@ export function Settings() {
         </div>
       </Panel>
     </div>
+  );
+}
+
+/** §15 #5 — editable white-label system settings, persisted to the `settings` table. */
+function SystemSettingsPanel() {
+  const [systemName, setSystemName] = useState("");
+  const [currency, setCurrency] = useState("");
+  const [country, setCountry] = useState("");
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = (await getSettings()) as unknown as { data: Record<string, string> };
+      if (cancelled) return;
+      setSystemName(data?.system_name ?? "PropNest");
+      setCurrency(data?.currency_symbol ?? "$");
+      setCountry(data?.country_code ?? "");
+      setLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const entries: Array<[string, string]> = [
+        ["system_name", systemName.trim()],
+        ["currency_symbol", currency.trim() || "$"],
+        ["country_code", country.trim()],
+      ];
+      for (const [k, v] of entries) {
+        const { error } = (await updateSetting(k, v)) as { error: { message: string } | null };
+        if (error) throw new Error(error.message);
+      }
+      toast.success("Settings saved", { description: "Reload to see name/currency changes everywhere." });
+    } catch (err) {
+      toast.error("Couldn't save settings", {
+        description: err instanceof Error ? err.message : "Unknown error",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Panel>
+      <header className="flex items-center gap-2 border-b px-5 py-4">
+        <span className="bg-brand-gradient-soft text-brand-blue flex size-8 items-center justify-center rounded-lg">
+          <SlidersHorizontalIcon className="size-4" />
+        </span>
+        <div>
+          <h3 className="text-base font-semibold text-foreground">System</h3>
+          <p className="text-xs text-muted-foreground">White-label name, currency, and country code.</p>
+        </div>
+      </header>
+      <div className="grid gap-4 px-5 py-5 sm:grid-cols-3">
+        <div className="space-y-2">
+          <Label htmlFor="set-name">System name</Label>
+          <Input id="set-name" value={systemName} disabled={!loaded || saving}
+            onChange={(e) => setSystemName(e.target.value)} placeholder="PropNest" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="set-currency">Currency symbol</Label>
+          <Input id="set-currency" value={currency} disabled={!loaded || saving} maxLength={4}
+            onChange={(e) => setCurrency(e.target.value)} placeholder="$" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="set-country">Country code</Label>
+          <Input id="set-country" value={country} disabled={!loaded || saving}
+            onChange={(e) => setCountry(e.target.value)} placeholder="e.g. 1" />
+        </div>
+      </div>
+      <footer className="flex justify-end border-t bg-card px-5 py-3">
+        <Button variant="gradient" onClick={handleSave} disabled={!loaded || saving}>
+          {saving ? <Loader2Icon className="animate-spin" /> : <SaveIcon />} Save settings
+        </Button>
+      </footer>
+    </Panel>
+  );
+}
+
+/** §15 #4 — admin maintenance: rebuild every active occupant's coverage from the ledger. */
+function MaintenancePanel() {
+  const { refresh: refreshData } = useData() as unknown as { refresh: () => void };
+  const { refresh: refreshCoverage } = useCoverageStore(isConfigured) as unknown as { refresh: () => void };
+  const [running, setRunning] = useState(false);
+
+  const handleRepair = async () => {
+    setRunning(true);
+    try {
+      const res = (await repairAllStudentsCoverage()) as {
+        success: boolean; repaired: number; failed: number; errors: string[];
+      };
+      refreshData();
+      refreshCoverage();
+      if (res.success) {
+        toast.success("Coverage repaired", { description: `${res.repaired} occupant${res.repaired === 1 ? "" : "s"} rebuilt from the ledger.` });
+      } else {
+        toast.warning("Repair finished with errors", {
+          description: `${res.repaired} rebuilt · ${res.failed} failed. ${res.errors[0] ?? ""}`,
+        });
+      }
+    } catch (err) {
+      toast.error("Repair failed", { description: err instanceof Error ? err.message : "Unknown error" });
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  return (
+    <Panel>
+      <header className="flex items-center gap-2 border-b px-5 py-4">
+        <span className="bg-brand-gradient-soft text-brand-blue flex size-8 items-center justify-center rounded-lg">
+          <WrenchIcon className="size-4" />
+        </span>
+        <div>
+          <h3 className="text-base font-semibold text-foreground">Maintenance</h3>
+          <p className="text-xs text-muted-foreground">Rebuild coverage from the payment ledger (source of truth).</p>
+        </div>
+      </header>
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-5">
+        <p className="max-w-md text-sm text-muted-foreground">
+          Replays every active occupant's payment history through the coverage engine.
+          Safe and idempotent — use it if a coverage badge ever looks out of sync. Takes ~10–30s.
+        </p>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="outline" disabled={running}>
+              {running ? <Loader2Icon className="animate-spin" /> : <WrenchIcon />} Repair coverage
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Rebuild all coverage?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This replays every active occupant's payments through the engine and overwrites the
+                derived coverage cache. It never changes payments — only the computed coverage. Continue?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={running}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={(e) => { e.preventDefault(); handleRepair(); }} disabled={running}>
+                {running && <Loader2Icon className="animate-spin" />} Run repair
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </Panel>
   );
 }
 
