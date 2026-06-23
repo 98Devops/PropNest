@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { UserIcon, SettingsIcon, LogOutIcon } from "lucide-react";
+import { UserIcon, SettingsIcon, LogOutIcon, ChevronDownIcon } from "lucide-react";
 import { useAuth } from "@/parts/p1_imports_context.jsx";
 
 export function NavUser() {
@@ -27,9 +27,19 @@ export function NavUser() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Avatar className="size-8 cursor-pointer">
-          <AvatarFallback>{initial}</AvatarFallback>
-        </Avatar>
+        <button
+          type="button"
+          className="flex cursor-pointer items-center gap-2 rounded-lg border bg-card px-2 py-1 transition-colors hover:bg-muted"
+          aria-label="Account menu"
+        >
+          <Avatar className="size-7">
+            <AvatarFallback>{initial}</AvatarFallback>
+          </Avatar>
+          <span className="hidden max-w-[140px] truncate text-sm font-medium text-foreground sm:inline">
+            {email}
+          </span>
+          <ChevronDownIcon className="size-4 text-muted-foreground" />
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuLabel className="flex items-center gap-3">
@@ -43,11 +53,11 @@ export function NavUser() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { window.location.hash = "settings"; }}>
             <UserIcon />
             Account
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => { window.location.hash = "settings"; }}>
             <SettingsIcon />
             Settings
           </DropdownMenuItem>

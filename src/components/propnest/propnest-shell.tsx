@@ -12,7 +12,7 @@ import { TenantProfileDrawer } from "./modals/tenant-profile-drawer";
 import { Loader2Icon } from "lucide-react";
 // Engine modules (brief §3) — auth gate reuses the existing provider + login.
 import { useAuth } from "@/parts/p1_imports_context.jsx";
-import { LoginScreen } from "@/parts/p3_modals.jsx";
+import { LoginScreen } from "./login-screen";
 import { isConfigured } from "@/lib/supabase";
 
 type AuthCtx = {
@@ -58,9 +58,10 @@ export function PropNestShell() {
   // instead of an empty dashboard. Reuses the existing LoginScreen + auth context.
   const auth = useAuth() as unknown as AuthCtx;
 
-  const handleLogin = async (emailOrUser: string, password: string) => {
+  // Demo mode passes a user object; configured mode passes (email, password).
+  const handleLogin = async (emailOrUser: string | object, password?: string) => {
     if (!isConfigured) { auth.setUser(emailOrUser); return { data: emailOrUser, error: null }; }
-    return auth.login(emailOrUser, password);
+    return auth.login(emailOrUser as string, password ?? "");
   };
 
   if (auth.loading) {
