@@ -22,6 +22,7 @@ import { useAuth, useData } from "@/parts/p1_imports_context.jsx";
 import { updateStudent } from "@/services/studentService.js";
 import { usePortfolio, usePortfolioCoverage } from "../use-portfolio";
 import { CoverageStatusBadge, coverageSubLabel } from "../coverage";
+import { CoverageBreakdown } from "../coverage-breakdown";
 import { EditableField } from "../editable-field";
 import { money, formatDate } from "../fmt";
 import { RecordPaymentSheet } from "./record-payment-sheet";
@@ -175,6 +176,9 @@ export function TenantProfileDrawer() {
                 onSave={saveField("notes")}
               />
             </section>
+
+            {/* Coverage breakdown — chain-aware ledger replay (Trevis parity) */}
+            <CoverageBreakdown payHistory={sortedHistory} monthlyRent={room.rent} />
 
             {/* Payment history */}
             <section className="p-5">
