@@ -27,7 +27,19 @@ export async function recordPayment({ studentId, amount, paymentDate, paymentMet
     })
     .select()
     .single();
-  return { data, error };
+
+  if (error) {
+    return { data, error };
+  }
+
+  // DERIVED-CACHE CONTRACT: a payment insert mutates a truth input, so coverage
+  // MUST be rebuilt — identical to updatePayment/deletePayment. The richer
+  // recordPaymentWithCoverage path is what the UI uses today; this guard makes
+  // THIS writer safe too, so the API can never silently leave coverage_end stale.
+  // Surfaced (not thrown) via rebuildError, per TD-5.
+  const rebuildResult = await rebuildCoverageSafely(studentId, 'create');
+
+  return { data, error: null, rebuildError: rebuildResult.error };
 }
 
 export async function getPaymentsByPropertyMonth(propertyId, monthYear) {
