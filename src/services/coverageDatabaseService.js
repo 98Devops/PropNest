@@ -34,7 +34,7 @@
 import { supabase } from '../lib/supabase.js';
 import { processPayment } from './paymentProcessor.js';
 import { classifyPortfolio } from './statusClassifier.js';
-import { toLocalISO } from './dateUtil.js';
+import { toLocalISO, parseLocalDate } from './dateUtil.js';
 
 /**
  * Record payment and update student coverage
@@ -168,12 +168,13 @@ export async function getDashboardKPIs() {
     .reduce((sum, s) => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
-      const end = new Date(s.coverage_end);
-      end.setHours(0, 0, 0, 0);
-      
+
+      // Local-midnight read (timezone-safe, matches classifyStudent / toLocalISO).
+      const end = parseLocalDate(s.coverage_end);
+      if (!end) return sum;
+
       const daysOverdue = Math.ceil((today - end) / (1000 * 60 * 60 * 24));
-      
+
       if (daysOverdue > 0 && s.daily_rate) {
         return sum + (daysOverdue * s.daily_rate);
       }
@@ -328,6 +329,10 @@ export async function rebuildStudentCoverage(studentId) {
   // start on every non-early payment.
   let chainCoverageStart = null;
 
+  // Pass 1 — pure, in-memory replay. Each payment's coverage depends on the prior
+  // one, so the REPLAY stays sequential, but it touches no I/O: we only collect the
+  // per-payment metadata writes to issue together afterwards.
+  const paymentUpdates = [];
   for (const payment of payments) {
     const paymentInput = {
       amount: parseFloat(payment.amount),
@@ -347,18 +352,39 @@ export async function rebuildStudentCoverage(studentId) {
     }
     currentCoverageEnd = finalResult.coverageEnd;
 
-    // Update payment record with recalculated coverage metadata.
     // toLocalISO: store the engine's LOCAL calendar day. Passing raw Date objects
     // lets the client serialize them as UTC, shifting dates by a day in non-UTC
     // zones (the 2026-06-18 timezone bug).
-    await supabase
-      .from('payments')
-      .update({
-        coverage_start_date: toLocalISO(finalResult.coverageStart),
-        coverage_end_date: toLocalISO(finalResult.coverageEnd),
-        days_covered: finalResult.coverageDays
-      })
-      .eq('id', payment.id);
+    paymentUpdates.push({
+      id: payment.id,
+      coverage_start_date: toLocalISO(finalResult.coverageStart),
+      coverage_end_date: toLocalISO(finalResult.coverageEnd),
+      days_covered: finalResult.coverageDays
+    });
+  }
+
+  // Pass 2 — write the per-payment coverage metadata CONCURRENTLY (was one
+  // sequential round-trip per payment: a real latency bottleneck for long-term
+  // tenants). The whole rebuild is idempotent and retried by rebuildCoverageSafely,
+  // so if any write fails we throw and let the retry redo the lot — far safer than
+  // the previous code, which never checked these update results at all (silent
+  // partial writes). The student-level coverage (the status truth) is still written
+  // by the single UPDATE below, after every metadata write has confirmed.
+  const writeResults = await Promise.all(
+    paymentUpdates.map((u) =>
+      supabase
+        .from('payments')
+        .update({
+          coverage_start_date: u.coverage_start_date,
+          coverage_end_date: u.coverage_end_date,
+          days_covered: u.days_covered
+        })
+        .eq('id', u.id)
+    )
+  );
+  const writeFailure = writeResults.find((r) => r && r.error);
+  if (writeFailure) {
+    throw new Error(`Coverage metadata write failed: ${writeFailure.error.message}`);
   }
 
   // 5. Update student coverage fields with final state.

@@ -64,7 +64,6 @@ export type PortfolioTotals = {
   totalBeds: number;
   activeStudents: number;  // headcount of active tenants (may exceed totalBeds if a room is over capacity)
   overCapacity: number;    // tenants beyond physical bed capacity (a data-integrity signal)
-  attentionCount: number;
 };
 
 export type FlatTenant = {
@@ -112,7 +111,7 @@ export function usePortfolio() {
   );
 
   const totals = useMemo<PortfolioTotals>(() => {
-    let collected = 0, expected = 0, totalBeds = 0, occupiedBeds = 0, activeStudents = 0, attentionCount = 0;
+    let collected = 0, expected = 0, totalBeds = 0, occupiedBeds = 0, activeStudents = 0;
     for (const p of properties) {
       collected += p.collected;
       expected += p.expected;
@@ -122,7 +121,6 @@ export function usePortfolio() {
       // derives vacantBeds = max(0, capacity - tenants), so occupied = capacity -
       // vacant = min(tenants, capacity). Summing this keeps occupiedBeds <= totalBeds.
       occupiedBeds += p.totalBeds - p.vacantBeds;
-      attentionCount += p.overdue.length;
     }
     return {
       collected, expected,
@@ -131,7 +129,6 @@ export function usePortfolio() {
       occupancyRate: totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0,
       occupiedBeds, totalBeds, activeStudents,
       overCapacity: Math.max(0, activeStudents - occupiedBeds),
-      attentionCount,
     };
   }, [properties]);
 
@@ -157,17 +154,6 @@ export function usePortfolio() {
     }
     out.sort((a, b) => b.date.localeCompare(a.date));
     return out.slice(0, 6);
-  }, [properties]);
-
-  const attention = useMemo(() => {
-    const rows: Array<{ id: string; name: string; property: string; room: string; balance: number; status: string }> = [];
-    for (const p of properties) {
-      for (const o of p.overdue) {
-        rows.push({ id: o.id, name: o.name, property: p.name, room: o.room, balance: o.balance, status: o.status });
-      }
-    }
-    rows.sort((a, b) => b.balance - a.balance);
-    return rows.slice(0, 6);
   }, [properties]);
 
   const allTenants = useMemo<FlatTenant[]>(() => {
@@ -240,5 +226,5 @@ export function usePortfolio() {
     return null;
   };
 
-  return { properties, totals, recentPayments, attention, allTenants, monthlyTrend, findTenant, loading };
+  return { properties, totals, recentPayments, allTenants, monthlyTrend, findTenant, loading };
 }
