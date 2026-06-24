@@ -163,20 +163,20 @@ export function CalendarScreen() {
                     <div className={cn("text-right font-semibold tabular-nums", isToday ? "text-brand-blue" : "text-foreground")}>
                       {c.date.getDate()}
                     </div>
-                    <div className="mt-auto flex flex-wrap gap-1">
+                    <div className="mt-auto flex flex-wrap items-center gap-x-2 gap-y-1">
                       {payCount > 0 && (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-emerald-100 px-1.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                          ${payCount}
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium tabular-nums text-emerald-600 dark:text-emerald-400" title={`${payCount} payment${payCount === 1 ? "" : "s"}`}>
+                          <span className="size-1.5 rounded-full bg-emerald-500" />{payCount > 1 ? payCount : ""}
                         </span>
                       )}
                       {expCount > 0 && (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-rose-100 px-1.5 text-[10px] font-medium text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">
-                          ⏳{expCount}
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium tabular-nums text-rose-600 dark:text-rose-400" title={`${expCount} coverage expiring`}>
+                          <span className="size-1.5 rounded-full bg-rose-500" />{expCount > 1 ? expCount : ""}
                         </span>
                       )}
                       {inCount > 0 && (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-100 px-1.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
-                          ⌂{inCount}
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium tabular-nums text-amber-600 dark:text-amber-400" title={`${inCount} check-in${inCount === 1 ? "" : "s"}`}>
+                          <span className="size-1.5 rounded-full bg-amber-500" />{inCount > 1 ? inCount : ""}
                         </span>
                       )}
                     </div>
