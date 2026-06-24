@@ -3,28 +3,8 @@ import { cn } from "@/lib/utils";
 import { money } from "./fmt";
 // Engine module (brief §3) — display-only replay of the ledger through the SAME
 // authoritative engine the writer uses, so it always agrees with coverage_end.
-import { buildCoverageBreakdown } from "@/services/coverageBreakdown.js";
-
-type Step = {
-  amount: number;
-  dateLabel: string;
-  days: number;
-  endLabel: string;
-  isEarly: boolean;
-  prepaidDaysPreserved: number;
-};
-type Chain = {
-  steps: Step[];
-  startLabel: string;
-  endLabel: string;
-  days: number;
-  isCurrent: boolean;
-};
-type Breakdown = {
-  chains: Chain[];
-  totalDays: number;
-  coverageEndLabel: string | null;
-};
+// Types come from its hand-written .d.ts contract (no more `as unknown as`).
+import { buildCoverageBreakdown, type CoverageBreakdownResult } from "@/services/coverageBreakdown.js";
 
 type PayHistoryItem = { amount: number | string; date?: string | null };
 
@@ -35,12 +15,12 @@ type PayHistoryItem = { amount: number | string; date?: string | null };
  * ledger. Pure display: no new billing math (see services/coverageBreakdown.js).
  */
 export function CoverageBreakdown({ payHistory, monthlyRent }: { payHistory: PayHistoryItem[]; monthlyRent: number }) {
-  const breakdown = useMemo<Breakdown>(() => {
+  const breakdown = useMemo<CoverageBreakdownResult>(() => {
     // Engine expects { amount, payment_date }; the drawer carries { amount, date }.
     const payments = (payHistory ?? [])
       .filter((p) => p.date)
       .map((p) => ({ amount: p.amount, payment_date: p.date as string }));
-    return buildCoverageBreakdown(payments, monthlyRent) as unknown as Breakdown;
+    return buildCoverageBreakdown(payments, monthlyRent);
   }, [payHistory, monthlyRent]);
 
   if (!breakdown.chains.length) return null;
