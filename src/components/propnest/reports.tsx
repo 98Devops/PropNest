@@ -29,7 +29,7 @@ export function Reports() {
     const headers = ["Property", "Location", "Rooms", "Tenants", "Bed capacity", "Vacant", "Occupancy %", "Collected", "Expected", "Outstanding", "Rate %"] as const;
     const rows = properties.map((p) => {
       const rate = p.expected > 0 ? Math.round((p.collected / p.expected) * 100) : 0;
-      const occ = p.totalBeds > 0 ? Math.round((p.students / p.totalBeds) * 100) : 0;
+      const occ = p.totalBeds > 0 ? Math.round(((p.totalBeds - p.vacantBeds) / p.totalBeds) * 100) : 0;
       return [p.name, p.location, p.rooms.length, p.students, p.totalBeds, p.vacantBeds, occ, p.collected, p.expected, Math.max(0, p.expected - p.collected), rate];
     });
     downloadCsv(`PropNest_portfolio_${timestamp()}.csv`, headers, rows);
@@ -71,7 +71,7 @@ export function Reports() {
           featured
           label="12-month collected"
           value={moneyCompact(total12mo)}
-          caption="All recorded payments"
+          caption="Payments received, last 12 months"
         />
         <StatCard
           label="This month"
@@ -88,7 +88,11 @@ export function Reports() {
         <StatCard
           label="Properties"
           value={String(properties.length)}
-          caption={`${totals.occupiedBeds} of ${totals.totalBeds} beds`}
+          caption={
+            totals.overCapacity > 0
+              ? `${totals.occupiedBeds} of ${totals.totalBeds} beds · ${totals.overCapacity} over capacity`
+              : `${totals.occupiedBeds} of ${totals.totalBeds} beds`
+          }
           progress={totals.occupancyRate}
         />
       </section>
@@ -122,7 +126,10 @@ export function Reports() {
           <TableBody>
             {properties.map((p) => {
               const pct = p.expected > 0 ? Math.round((p.collected / p.expected) * 100) : 0;
-              const occ = p.totalBeds > 0 ? Math.round((p.students / p.totalBeds) * 100) : 0;
+              // Bed occupancy is capped at capacity (occupied = min(tenants, beds));
+              // the "Tenants X/Y" column above reveals any over-capacity headcount.
+              const occupiedBeds = p.totalBeds - p.vacantBeds;
+              const occ = p.totalBeds > 0 ? Math.round((occupiedBeds / p.totalBeds) * 100) : 0;
               return (
                 <TableRow key={p.id} className="h-12">
                   <TableCell className="ps-5 font-medium" style={{ color: p.color }}>{p.name}</TableCell>

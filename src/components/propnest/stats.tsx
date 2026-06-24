@@ -26,7 +26,7 @@ export function PropNestStats() {
       <StatCard
         label="Expected"
         value={money(totals.expected)}
-        caption={`${totals.occupiedBeds} occupied bed${totals.occupiedBeds === 1 ? "" : "s"}`}
+        caption={`${totals.activeStudents} active tenant${totals.activeStudents === 1 ? "" : "s"}`}
       />
       <StatCard
         label="Outstanding"
@@ -41,7 +41,11 @@ export function PropNestStats() {
       <StatCard
         label="Occupancy"
         value={`${totals.occupancyRate}%`}
-        caption={`${totals.occupiedBeds} of ${totals.totalBeds} beds`}
+        caption={
+          totals.overCapacity > 0
+            ? `${totals.occupiedBeds} of ${totals.totalBeds} beds · ${totals.overCapacity} over capacity`
+            : `${totals.occupiedBeds} of ${totals.totalBeds} beds`
+        }
         progress={totals.occupancyRate}
       />
     </>

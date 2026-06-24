@@ -59,9 +59,11 @@ export type PortfolioTotals = {
   expected: number;
   outstanding: number;
   collectionRate: number;  // 0..100
-  occupancyRate: number;   // 0..100
-  occupiedBeds: number;
+  occupancyRate: number;   // 0..100 (beds can't exceed 100% — over-capacity is tracked separately)
+  occupiedBeds: number;    // physical beds in use = min(tenants, capacity), so always <= totalBeds
   totalBeds: number;
+  activeStudents: number;  // headcount of active tenants (may exceed totalBeds if a room is over capacity)
+  overCapacity: number;    // tenants beyond physical bed capacity (a data-integrity signal)
   attentionCount: number;
 };
 
@@ -110,12 +112,16 @@ export function usePortfolio() {
   );
 
   const totals = useMemo<PortfolioTotals>(() => {
-    let collected = 0, expected = 0, totalBeds = 0, occupiedBeds = 0, attentionCount = 0;
+    let collected = 0, expected = 0, totalBeds = 0, occupiedBeds = 0, activeStudents = 0, attentionCount = 0;
     for (const p of properties) {
       collected += p.collected;
       expected += p.expected;
       totalBeds += p.totalBeds;
-      occupiedBeds += p.students;
+      activeStudents += p.students;
+      // Physical beds in use can never exceed a property's capacity; buildProps
+      // derives vacantBeds = max(0, capacity - tenants), so occupied = capacity -
+      // vacant = min(tenants, capacity). Summing this keeps occupiedBeds <= totalBeds.
+      occupiedBeds += p.totalBeds - p.vacantBeds;
       attentionCount += p.overdue.length;
     }
     return {
@@ -123,7 +129,9 @@ export function usePortfolio() {
       outstanding: Math.max(0, expected - collected),
       collectionRate: expected > 0 ? Math.round((collected / expected) * 100) : 0,
       occupancyRate: totalBeds > 0 ? Math.round((occupiedBeds / totalBeds) * 100) : 0,
-      occupiedBeds, totalBeds, attentionCount,
+      occupiedBeds, totalBeds, activeStudents,
+      overCapacity: Math.max(0, activeStudents - occupiedBeds),
+      attentionCount,
     };
   }, [properties]);
 
