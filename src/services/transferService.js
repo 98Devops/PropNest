@@ -79,7 +79,11 @@ export async function getAllAvailableRooms() {
   if (!isConfigured) return { data: [], error: null };
 
   try {
-    // Get all active rooms with their students and property info
+    // Get all active rooms with their students and property info.
+    // NOTE: PostgREST can't take a comma-joined order string with an embedded
+    // foreign column ('properties.name, room_number' throws "failed to parse
+    // order"). Order by the local room_number only; the UI groups by property
+    // name itself, so cross-property ordering is handled client-side.
     const { data: rooms, error: roomsError } = await supabase
       .from('rooms')
       .select(`
@@ -92,7 +96,7 @@ export async function getAllAvailableRooms() {
         students(id, status, full_name)
       `)
       .eq('is_active', true)
-      .order('properties.name, room_number');
+      .order('room_number', { ascending: true });
 
     if (roomsError) {
       return { data: [], error: roomsError };
