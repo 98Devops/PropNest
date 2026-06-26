@@ -5,9 +5,17 @@ import type { PortfolioRow } from "./use-portfolio";
 
 export function PropertyCard({
   property,
+  attentionCount = 0,
   onClick,
 }: {
   property: PortfolioRow;
+  /**
+   * Coverage-derived attention count for this property (OVERDUE / DUE_TODAY /
+   * EXPIRING_SOON), supplied by the caller from usePortfolioAttention so the card
+   * agrees with the property detail, dashboard, and finance — one definition of
+   * "attention" across the app.
+   */
+  attentionCount?: number;
   onClick?: () => void;
 }) {
   const pct = property.expected > 0
@@ -16,7 +24,6 @@ export function PropertyCard({
   const occPct = property.totalBeds > 0
     ? Math.round((property.students / property.totalBeds) * 100)
     : 0;
-  const attentionCount = property.overdue.length;
 
   return (
     <button

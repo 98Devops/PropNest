@@ -99,6 +99,94 @@ export async function updateRoom(roomId, updates) {
   return { data, error: null, rebuildError };
 }
 
+/**
+ * Add one bed to a room (increase bed_capacity by 1).
+ *
+ * bed_capacity is NOT a coverage truth input (rent_per_bed is), so adding a bed
+ * never triggers a coverage rebuild — it only changes capacity, and every
+ * occupancy/vacancy metric is derived from bed_capacity by buildProps, so the
+ * dashboard updates on the next data refresh. Mirrors addRoom's shape.
+ *
+ * @param {string} roomId
+ * @returns {Promise<{ data: object|null, error: object|null, bedCapacity?: number }>}
+ */
+export async function addBed(roomId) {
+  if (!isConfigured) return { data: null, error: { message: 'Not configured' } };
+
+  const { data: room, error: rErr } = await supabase
+    .from('rooms')
+    .select('bed_capacity')
+    .eq('id', roomId)
+    .single();
+  if (rErr) return { data: null, error: rErr };
+
+  const next = Number(room.bed_capacity || 0) + 1;
+  const { data, error } = await supabase
+    .from('rooms')
+    .update({ bed_capacity: next })
+    .eq('id', roomId)
+    .select()
+    .single();
+  return { data, error, bedCapacity: next };
+}
+
+/**
+ * Remove one bed from a room (decrease bed_capacity by 1).
+ *
+ * Refuses to drop capacity below the number of occupying tenants (you can't have
+ * fewer beds than people in them) or below 1 (remove the room instead). Like
+ * addBed, this touches capacity only — no coverage rebuild.
+ *
+ * @param {string} roomId
+ * @returns {Promise<{ data: object|null, error: object|null, bedCapacity?: number }>}
+ */
+export async function removeBed(roomId) {
+  if (!isConfigured) return { data: null, error: { message: 'Not configured' } };
+
+  const { data: room, error: rErr } = await supabase
+    .from('rooms')
+    .select('bed_capacity')
+    .eq('id', roomId)
+    .single();
+  if (rErr) return { data: null, error: rErr };
+
+  const current = Number(room.bed_capacity || 0);
+
+  // Anyone not VACATED is physically occupying a bed (matches transferService /
+  // buildProps occupancy counting).
+  const { data: students, error: sErr } = await supabase
+    .from('students')
+    .select('id')
+    .eq('room_id', roomId)
+    .neq('status', 'VACATED');
+  if (sErr) return { data: null, error: sErr };
+
+  const occupied = (students || []).length;
+  if (current - 1 < occupied) {
+    return {
+      data: null,
+      error: {
+        message: `Can't remove a bed — ${occupied} of ${current} bed${current === 1 ? '' : 's'} occupied. Vacate or transfer a tenant first.`,
+      },
+    };
+  }
+  if (current - 1 < 1) {
+    return {
+      data: null,
+      error: { message: 'A room must keep at least one bed. Remove the room instead.' },
+    };
+  }
+
+  const next = current - 1;
+  const { data, error } = await supabase
+    .from('rooms')
+    .update({ bed_capacity: next })
+    .eq('id', roomId)
+    .select()
+    .single();
+  return { data, error, bedCapacity: next };
+}
+
 export async function deleteRoom(roomId) {
   if (!isConfigured) return { data: null, error: { message: 'Not configured' } };
   const { data, error } = await supabase

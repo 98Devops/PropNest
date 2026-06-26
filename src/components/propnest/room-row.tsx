@@ -78,7 +78,7 @@ export function RoomRow({
           />
         </button>
         {isAdmin && (
-          <RoomRowActions room={{ id: room.id, no: room.no, activeCount: real.length }} />
+          <RoomRowActions room={{ id: room.id, no: room.no, activeCount: real.length, beds: room.beds }} />
         )}
       </div>
 

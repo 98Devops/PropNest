@@ -4,11 +4,13 @@ import { SearchIcon } from "lucide-react";
 import { PropertyCard } from "./property-card";
 import { PropertyDetail } from "./property-detail";
 import { Panel } from "./panel";
-import { usePortfolio } from "./use-portfolio";
+import { usePortfolio, usePortfolioAttention } from "./use-portfolio";
 import { useNav } from "@/lib/propnest-nav";
 
 export function Properties() {
   const { properties, loading } = usePortfolio();
+  // Coverage-derived attention per property (matches detail / dashboard / finance).
+  const { byProperty } = usePortfolioAttention();
   const { selectedPropertyId, setSelectedPropertyId } = useNav();
   const [search, setSearch] = useState("");
 
@@ -67,6 +69,7 @@ export function Properties() {
             <PropertyCard
               key={p.id}
               property={p}
+              attentionCount={byProperty[p.name] ?? 0}
               onClick={() => setSelectedPropertyId(p.id)}
             />
           ))}

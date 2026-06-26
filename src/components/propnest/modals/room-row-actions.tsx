@@ -3,7 +3,7 @@ import {
   Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -13,14 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { MoreVerticalIcon, PencilIcon, Trash2Icon, Loader2Icon } from "lucide-react";
+import { MoreVerticalIcon, PencilIcon, Trash2Icon, Loader2Icon, BedSingleIcon, BedDoubleIcon } from "lucide-react";
 import { useLabels } from "@/lib/vertical-labels";
 // Engine modules (brief §3) — consumed without modification.
 import { useData, useAuth } from "@/parts/p1_imports_context.jsx";
 import { usePortfolioCoverage } from "../coverage-context";
-import { updateRoom, removeRoom } from "@/services/propertyService.js";
+import { updateRoom, removeRoom, addBed, removeBed } from "@/services/propertyService.js";
 
-type RoomLite = { id: string; no: string; activeCount: number };
+type RoomLite = { id: string; no: string; activeCount: number; beds: number };
 
 export type RoomRowActionsProps = { room: RoomLite };
 
@@ -31,8 +31,48 @@ export type RoomRowActionsProps = { room: RoomLite };
  * the room still has active tenants and returns that as an error we surface.
  */
 export function RoomRowActions({ room }: RoomRowActionsProps) {
+  const labels = useLabels();
+  const refreshAll = useRefreshAll();
   const [renameOpen, setRenameOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
+  const [bedBusy, setBedBusy] = useState(false);
+
+  // No free bed to give up, or only one bed left → can't remove a bed.
+  const cannotRemoveBed = room.activeCount >= room.beds || room.beds <= 1;
+
+  const handleAddBed = async () => {
+    if (bedBusy) return;
+    setBedBusy(true);
+    try {
+      const { error, bedCapacity } = (await addBed(room.id)) as {
+        error: { message?: string } | null; bedCapacity?: number;
+      };
+      if (error) throw new Error(error.message ?? "Unknown error");
+      refreshAll();
+      toast.success("Bed added", { description: `${room.no} now has ${bedCapacity} bed${bedCapacity === 1 ? "" : "s"}.` });
+    } catch (err) {
+      toast.error("Couldn't add a bed", { description: err instanceof Error ? err.message : "Unknown error" });
+    } finally {
+      setBedBusy(false);
+    }
+  };
+
+  const handleRemoveBed = async () => {
+    if (bedBusy) return;
+    setBedBusy(true);
+    try {
+      const { error, bedCapacity } = (await removeBed(room.id)) as {
+        error: { message?: string } | null; bedCapacity?: number;
+      };
+      if (error) throw new Error(error.message ?? "Unknown error");
+      refreshAll();
+      toast.success("Bed removed", { description: `${room.no} now has ${bedCapacity} bed${bedCapacity === 1 ? "" : "s"}.` });
+    } catch (err) {
+      toast.error("Couldn't remove a bed", { description: err instanceof Error ? err.message : "Unknown error" });
+    } finally {
+      setBedBusy(false);
+    }
+  };
 
   return (
     <>
@@ -53,8 +93,23 @@ export function RoomRowActions({ room }: RoomRowActionsProps) {
           <DropdownMenuItem onSelect={() => setRenameOpen(true)}>
             <PencilIcon /> Rename room
           </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            disabled={bedBusy}
+            onSelect={(e) => { e.preventDefault(); handleAddBed(); }}
+          >
+            <BedDoubleIcon /> Add bed
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            disabled={bedBusy || cannotRemoveBed}
+            onSelect={(e) => { e.preventDefault(); handleRemoveBed(); }}
+          >
+            <BedSingleIcon /> Remove bed
+            <span className="ms-auto text-xs text-muted-foreground tabular-nums">{room.activeCount}/{room.beds}</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onSelect={() => setRemoveOpen(true)}>
-            <Trash2Icon /> Remove room
+            <Trash2Icon /> Remove {labels.unit.toLowerCase()}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

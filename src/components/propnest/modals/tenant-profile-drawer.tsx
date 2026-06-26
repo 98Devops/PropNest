@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import {
   PlusIcon, UserMinusIcon, ExternalLinkIcon, PhoneIcon, IdCardIcon, CalendarIcon, BedSingleIcon, BuildingIcon,
-  UserIcon, StickyNoteIcon,
+  UserIcon, StickyNoteIcon, ArrowRightLeftIcon,
 } from "lucide-react";
 import { useNav } from "@/lib/propnest-nav";
 import { useLabels } from "@/lib/vertical-labels";
@@ -28,6 +28,7 @@ import { money, formatDate } from "../fmt";
 import { RecordPaymentSheet } from "./record-payment-sheet";
 import { PaymentRowActions } from "./payment-row-actions";
 import { VacateTenantDialog } from "./vacate-tenant-dialog";
+import { TransferTenantSheet } from "./transfer-tenant-sheet";
 
 /**
  * Mounted once at the shell level. Opens whenever NavContext.openTenant(id)
@@ -60,6 +61,7 @@ export function TenantProfileDrawer() {
 
   const [payOpen, setPayOpen] = useState(false);
   const [vacateOpen, setVacateOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
 
   const found = findTenant(selectedTenantId);
   const open = !!selectedTenantId;
@@ -237,6 +239,11 @@ export function TenantProfileDrawer() {
             </Button>
             <div className="flex items-center gap-2">
               {isAdmin && isActive && (
+                <Button variant="outline" onClick={() => setTransferOpen(true)}>
+                  <ArrowRightLeftIcon /> Transfer
+                </Button>
+              )}
+              {isAdmin && isActive && (
                 <Button variant="outline" onClick={() => setVacateOpen(true)} className="text-rose-600 hover:text-rose-700 dark:text-rose-400">
                   <UserMinusIcon /> Vacate
                 </Button>
@@ -263,6 +270,15 @@ export function TenantProfileDrawer() {
         tenantId={tenant.id}
         tenantName={tenant.name}
         onSuccess={closeTenant}
+      />
+      <TransferTenantSheet
+        open={transferOpen}
+        onOpenChange={setTransferOpen}
+        tenantId={tenant.id}
+        tenantName={tenant.name}
+        fromRoomId={room.id}
+        fromLabel={`${property.name} · ${room.no}`}
+        currentRent={room.rent}
       />
     </>
   );
