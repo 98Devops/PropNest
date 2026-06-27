@@ -35,8 +35,21 @@ const STATUS_LABEL: Record<string, string> = {
 
 export function CalendarScreen() {
   const { properties } = usePortfolio();
-  const { coverageMap } = usePortfolioCoverage();
+  const { coverageMap, students } = usePortfolioCoverage();
   const { openTenant } = useNav();
+
+  // classifyStudent() (what coverageMap holds) does NOT carry coverage_end, so an
+  // expiry can't be placed on a day from the classification alone — that silently
+  // killed the expiry markers. Join id → { status, coverageEnd } from the RAW
+  // coverage rows (which do have coverage_end) so expiries land on the right day.
+  const coverageInfo = useMemo(() => {
+    const m = new Map<string, { status: string; coverageEnd: string | null }>();
+    for (const s of (students ?? []) as Array<{ id: string; coverage_end?: string | null }>) {
+      const c = coverageMap.get(s.id);
+      if (c) m.set(s.id, { status: c.status, coverageEnd: s.coverage_end ?? null });
+    }
+    return m;
+  }, [students, coverageMap]);
   const [cursor, setCursor] = useState(() => {
     const n = new Date();
     return new Date(n.getFullYear(), n.getMonth(), 1);
@@ -65,7 +78,7 @@ export function CalendarScreen() {
               studentId: s.id, tenant: s.name, property: p.name, room: r.no,
             });
           }
-          const cov = coverageMap.get(s.id);
+          const cov = coverageInfo.get(s.id);
           if (cov && cov.coverageEnd && ["EXPIRING_SOON", "DUE_TODAY", "OVERDUE"].includes(cov.status)) {
             ensure(cov.coverageEnd.slice(0, 10)).expiries.push({
               studentId: s.id, tenant: s.name, property: p.name, room: r.no, status: cov.status,
@@ -82,7 +95,7 @@ export function CalendarScreen() {
       firstWeekday: first.getDay(),
       daysInMonth: last.getDate(),
     };
-  }, [properties, coverageMap, cursor]);
+  }, [properties, coverageInfo, cursor]);
 
   const todayISO = ymd(new Date());
   const cells: Array<{ date: Date | null; iso: string; events?: DayEvents }> = [];
