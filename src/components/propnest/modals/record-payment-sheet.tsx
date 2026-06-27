@@ -26,6 +26,7 @@ import { useData, useAuth } from "@/parts/p1_imports_context.jsx";
 import { usePortfolioCoverage } from "../coverage-context";
 import { recordPaymentWithCoverage } from "@/services/coverageDatabaseService.js";
 import { usePortfolio } from "../use-portfolio";
+import { localTodayISO, isFutureDate } from "@/lib/dateGuards";
 
 type PaymentResult = {
   payment: unknown;
@@ -36,10 +37,6 @@ type PaymentResult = {
 
 const METHODS = ["Cash", "Bank Transfer", "Mobile Money", "Card"] as const;
 type Method = (typeof METHODS)[number];
-
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export type RecordPaymentSheetProps = {
   open: boolean;
@@ -73,7 +70,7 @@ export function RecordPaymentSheet({
 
   const [studentId, setStudentId] = useState<string>(defaultStudentId ?? "");
   const [amount, setAmount]       = useState<string>("");
-  const [date, setDate]           = useState<string>(todayISO());
+  const [date, setDate]           = useState<string>(localTodayISO());
   const [method, setMethod]       = useState<Method>("Cash");
   const [receipt, setReceipt]     = useState<string>("");
   const [notes, setNotes]         = useState<string>("");
@@ -85,7 +82,7 @@ export function RecordPaymentSheet({
     if (open) {
       setStudentId(defaultStudentId ?? "");
       setAmount("");
-      setDate(todayISO());
+      setDate(localTodayISO());
       setMethod("Cash");
       setReceipt("");
       setNotes("");
@@ -98,7 +95,7 @@ export function RecordPaymentSheet({
   const amountNum = Number(amount);
   // Guard: a future payment date silently pushes coverage forward — almost always a
   // data-entry slip. Require an explicit confirm before it can be submitted.
-  const isFuture = !!date && date > todayISO();
+  const isFuture = isFutureDate(date);
   const canSubmit =
     !!studentId &&
     Number.isFinite(amountNum) &&
@@ -225,7 +222,7 @@ export function RecordPaymentSheet({
               <Input
                 id="rp-date"
                 type="date"
-                max={todayISO()}
+                max={localTodayISO()}
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
               />

@@ -22,6 +22,7 @@ import { useLabels } from "@/lib/vertical-labels";
 // Engine modules (brief §3) — consumed without modification.
 import { useAuth } from "@/parts/p1_imports_context.jsx";
 import { updatePayment, deletePayment } from "@/services/paymentService.js";
+import { localTodayISO, isFutureDate } from "@/lib/dateGuards";
 
 type PaymentRow = {
   id: string;
@@ -107,10 +108,6 @@ function rebuildToast(rebuildError: unknown, okMessage: string) {
   }
 }
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function EditPaymentSheet({
   open, onOpenChange, payment, userId, currency, onChanged,
 }: {
@@ -122,7 +119,7 @@ function EditPaymentSheet({
   onChanged: () => void;
 }) {
   const [amount, setAmount] = useState(String(payment.amount ?? ""));
-  const [date, setDate] = useState(payment.date || todayISO());
+  const [date, setDate] = useState(payment.date || localTodayISO());
   const [method, setMethod] = useState(payment.method || "Cash");
   const [receipt, setReceipt] = useState(payment.receipt || "");
   const [notes, setNotes] = useState(payment.notes || "");
@@ -133,7 +130,7 @@ function EditPaymentSheet({
   useEffect(() => {
     if (open) {
       setAmount(String(payment.amount ?? ""));
-      setDate(payment.date || todayISO());
+      setDate(payment.date || localTodayISO());
       setMethod(payment.method || "Cash");
       setReceipt(payment.receipt || "");
       setNotes(payment.notes || "");
@@ -145,7 +142,7 @@ function EditPaymentSheet({
   const amountNum = Number(amount);
   // Same future-date guard as the record sheet — a future payment_date pushes
   // coverage forward and is almost always a slip; require explicit confirmation.
-  const isFuture = !!date && date > todayISO();
+  const isFuture = isFutureDate(date);
   const canSubmit =
     Number.isFinite(amountNum) && amountNum > 0 && !!date && (!isFuture || confirmFuture) && !saving;
   // Existing seed data may carry methods (EcoCash/Zipit) outside the current list.
@@ -196,7 +193,7 @@ function EditPaymentSheet({
             </div>
             <div className="space-y-2">
               <Label htmlFor="ep-date">Payment date</Label>
-              <Input id="ep-date" type="date" max={todayISO()}
+              <Input id="ep-date" type="date" max={localTodayISO()}
                 value={date} onChange={(e) => setDate(e.target.value)} />
             </div>
           </div>

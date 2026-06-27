@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { localTodayISO } from './dateGuards';
 
 /**
  * Read-only data-quality probes that live OUTSIDE the coverage engine.
@@ -7,15 +8,6 @@ import { supabase } from './supabase';
  * should review. Keeping them in lib/ (not services/) makes explicit that they
  * are not part of the billing single-source-of-truth; they are detection only.
  */
-
-/** Local calendar day as YYYY-MM-DD (never UTC — matches the engine's toLocalISO). */
-function localToday() {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
 
 /**
  * Payments whose payment_date is in the future relative to today. A future date
@@ -26,7 +18,7 @@ function localToday() {
  */
 export async function getFutureDatedPayments() {
   if (!supabase) return { data: [], error: null };
-  const today = localToday();
+  const today = localTodayISO();
   const { data, error } = await supabase
     .from('payments')
     .select(
