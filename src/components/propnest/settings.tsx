@@ -12,6 +12,7 @@ import {
   SlidersHorizontalIcon, WrenchIcon, Loader2Icon, SaveIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { BRAND_NAME } from "@/lib/brand";
 import { toast } from "sonner";
 // Engine modules (brief §3) — consumed without modification.
 import { useAuth, useData, getSettings, updateSetting } from "@/parts/p1_imports_context.jsx";
@@ -131,7 +132,7 @@ function SystemSettingsPanel() {
     (async () => {
       const { data } = (await getSettings()) as unknown as { data: Record<string, string> };
       if (cancelled) return;
-      setSystemName(data?.system_name ?? "PropNest");
+      setSystemName(data?.system_name ?? BRAND_NAME);
       setCurrency(data?.currency_symbol ?? "$");
       setCountry(data?.country_code ?? "");
       setLoaded(true);
@@ -176,7 +177,7 @@ function SystemSettingsPanel() {
         <div className="space-y-2">
           <Label htmlFor="set-name">System name</Label>
           <Input id="set-name" value={systemName} disabled={!loaded || saving}
-            onChange={(e) => setSystemName(e.target.value)} placeholder="PropNest" />
+            onChange={(e) => setSystemName(e.target.value)} placeholder={BRAND_NAME} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="set-currency">Currency symbol</Label>

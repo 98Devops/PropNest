@@ -15,6 +15,7 @@ import {
 import { footerNavLinks, navGroups } from "@/components/app-shared";
 import { NavGroup } from "@/components/nav-group";
 import { useNav } from "@/lib/propnest-nav";
+import { BRAND_NAME } from "@/lib/brand";
 
 export function AppSidebar() {
   const { screen } = useNav();
@@ -44,7 +45,7 @@ export function AppSidebar() {
         <SidebarMenuButton asChild>
           <a href="#dashboard">
             <HomeIcon className="text-primary" />
-            <span className="font-semibold text-foreground!">PropNest</span>
+            <span className="font-semibold text-foreground!">{BRAND_NAME}</span>
           </a>
         </SidebarMenuButton>
       </SidebarHeader>
@@ -72,7 +73,7 @@ export function AppSidebar() {
         </SidebarMenu>
         <div className="px-4 pt-4 pb-2 transition-opacity group-data-[collapsible=icon]:pointer-events-none group-data-[collapsible=icon]:opacity-0">
           <p className="text-nowrap text-[9px] text-muted-foreground">
-            © {new Date().getFullYear()} PropNest
+            © {new Date().getFullYear()} {BRAND_NAME}
           </p>
         </div>
       </SidebarFooter>

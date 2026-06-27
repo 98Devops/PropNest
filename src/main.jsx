@@ -6,9 +6,14 @@ import { AuthProvider, DataProvider } from './parts/p1_imports_context.jsx'
 import PropNestShell from './components/propnest/propnest-shell'
 import { Toaster } from './components/ui/sonner'
 import { initSentry } from './lib/sentry.js'
+import { BRAND_NAME } from './lib/brand'
 
 // No-op unless VITE_SENTRY_DSN is set (i.e. only on the live deploy).
 initSentry()
+
+// Brand the browser tab from the active deploy (PropNest vs Trevis) without
+// editing static index.html.
+document.title = `${BRAND_NAME} | Property Management`
 
 // The new PropNest shell is the default UI and now has FULL feature parity with
 // the original App: inline tenant edits, payment edit/delete, room rename/delete,

@@ -11,6 +11,7 @@ import {
   BookOpenIcon,
 } from "lucide-react";
 import type { ScreenKey } from "@/lib/propnest-nav";
+import { ACTIVE_LABELS } from "@/lib/vertical-labels";
 
 export type SidebarNavItem = {
   title: string;
@@ -33,7 +34,7 @@ export const navGroups: SidebarNavGroup[] = [
     items: [
       { title: "Dashboard",  screen: "dashboard",  path: "#dashboard",  icon: <LayoutGridIcon /> },
       { title: "Properties", screen: "properties", path: "#properties", icon: <Building2Icon /> },
-      { title: "Tenants",    screen: "tenants",    path: "#tenants",    icon: <UsersIcon /> },
+      { title: ACTIVE_LABELS.occupantPlural, screen: "tenants", path: "#tenants", icon: <UsersIcon /> },
     ],
   },
   {

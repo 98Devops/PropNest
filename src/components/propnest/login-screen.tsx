@@ -6,6 +6,7 @@ import { Building2Icon, Loader2Icon, AlertTriangleIcon } from "lucide-react";
 // Engine modules (brief §3) — consumed without modification.
 import { useAuth } from "@/parts/p1_imports_context.jsx";
 import { supabase, isConfigured as sbConfigured } from "@/lib/supabase";
+import { BRAND_NAME } from "@/lib/brand";
 
 type LoginResult = { data: unknown; error: { message: string } | null };
 type DemoUser = { email: string; password: string; role: string; full_name: string };
@@ -73,7 +74,7 @@ export function LoginScreen({
             <Building2Icon className="size-6" />
           </span>
           <div className="text-2xl font-bold tracking-tight">
-            <span className="text-brand-gradient">PropNest</span>
+            <span className="text-brand-gradient">{BRAND_NAME}</span>
           </div>
           <div className="mt-1 text-[11px] font-medium uppercase tracking-[0.15em] text-muted-foreground">
             Property Manager
@@ -122,7 +123,7 @@ export function LoginScreen({
 
         <p className="mt-6 text-center text-[11px] leading-relaxed text-muted-foreground">
           {isConfigured
-            ? "Staff access only — use your PropNest credentials"
+            ? `Staff access only — use your ${BRAND_NAME} credentials`
             : "Demo: admin@propnest.app / admin1234"}
         </p>
       </div>
