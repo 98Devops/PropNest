@@ -85,14 +85,18 @@ BEGIN
     p_student_id, p_from_room_id, p_to_room_id, p_transfer_date, p_reason, p_performed_by
   ) RETURNING id INTO v_transfer_id;
 
+  -- NOTE: PropNest's students/monthly_obligations tables don't have an updated_at
+  -- column, so we do NOT set it here (the original archived function assumed a
+  -- different schema and failed with: column "updated_at" ... does not exist).
+  -- The room move is what matters; the JS layer rebuilds coverage afterwards.
   UPDATE students
-  SET room_id = p_to_room_id, updated_at = now()
+  SET room_id = p_to_room_id
   WHERE id = p_student_id;
 
   IF v_from_room.rent_per_bed != v_to_room.rent_per_bed THEN
     v_current_month := date_trunc('month', CURRENT_DATE)::date;
     UPDATE monthly_obligations
-    SET amount_due = v_to_room.rent_per_bed, updated_at = now()
+    SET amount_due = v_to_room.rent_per_bed
     WHERE student_id = p_student_id AND month = v_current_month;
     IF FOUND THEN
       v_obligation_updated := true;
