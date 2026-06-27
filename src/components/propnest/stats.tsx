@@ -6,8 +6,9 @@ import { DeltaPill } from "./delta-pill";
 
 export function PropNestStats() {
   const { totals } = usePortfolio();
-  // Coverage-derived attention (matches Finance/Tenants), not month-based overdue.
-  const { count: attentionCount } = usePortfolioAttention();
+  // Coverage-derived attention + outstanding (matches Finance/Tenants and Trevis's
+  // arrears), not the month-based expected−collected figure.
+  const { count: attentionCount, totalOutstanding } = usePortfolioAttention();
 
   return (
     <>
@@ -30,7 +31,7 @@ export function PropNestStats() {
       />
       <StatCard
         label="Outstanding"
-        value={money(totals.outstanding)}
+        value={money(totalOutstanding)}
         delta={attentionCount > 0 ? (
           <DeltaPill tone="negative">{attentionCount}</DeltaPill>
         ) : (

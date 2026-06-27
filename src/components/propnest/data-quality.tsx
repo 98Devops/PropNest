@@ -2,11 +2,15 @@ import { useCallback, useEffect, useState } from "react";
 import { Panel } from "./panel";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2Icon, Loader2Icon, ShieldCheckIcon } from "lucide-react";
+import { CheckCircle2Icon, Loader2Icon, ShieldCheckIcon, CalendarClockIcon } from "lucide-react";
 import { toast } from "sonner";
 // Engine modules (brief §3) — consumed without modification.
 import { getDataFlags, updateStudent } from "@/services/studentService.js";
+// Read-only detection probe (lib/, outside the engine).
+import { getFutureDatedPayments } from "@/lib/dataQualityChecks.js";
 import { usePortfolioCoverage } from "./coverage-context";
+import { useNav } from "@/lib/propnest-nav";
+import { money } from "./fmt";
 
 /**
  * Admin-only data-quality review (mirrors legacy Reports → Quality tab). Lists
@@ -37,20 +41,44 @@ type FlagRow = {
   rooms?: { room_number?: string | null; properties?: { name?: string | null } | null } | null;
 };
 
+type FuturePaymentRow = {
+  id: string;
+  amount: number;
+  payment_date: string;
+  payment_method: string | null;
+  student_id: string;
+  students?: {
+    full_name?: string | null;
+    rooms?: { room_number?: string | null; properties?: { name?: string | null } | null } | null;
+  } | null;
+};
+
 export function DataQuality() {
   const [flags, setFlags] = useState<FlagRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [resolving, setResolving] = useState<string | null>(null);
+  const [future, setFuture] = useState<FuturePaymentRow[]>([]);
+  const [loadingFuture, setLoadingFuture] = useState(true);
   const { refresh: refreshCoverage } = usePortfolioCoverage() as unknown as { refresh: () => void };
+  const { openTenant } = useNav();
 
   const load = useCallback(async () => {
     setLoading(true);
-    const { data, error } = (await getDataFlags()) as { data: FlagRow[]; error: { message?: string } | null };
-    if (error) {
-      toast.error("Could not load data-quality flags", { description: error.message ?? "Unknown error." });
+    setLoadingFuture(true);
+    const [flagRes, futureRes] = await Promise.all([
+      getDataFlags() as Promise<{ data: FlagRow[]; error: { message?: string } | null }>,
+      getFutureDatedPayments() as Promise<{ data: FuturePaymentRow[]; error: { message?: string } | null }>,
+    ]);
+    if (flagRes.error) {
+      toast.error("Could not load data-quality flags", { description: flagRes.error.message ?? "Unknown error." });
     }
-    setFlags(data ?? []);
+    setFlags(flagRes.data ?? []);
     setLoading(false);
+    if (futureRes.error) {
+      toast.error("Could not check future-dated payments", { description: futureRes.error.message ?? "Unknown error." });
+    }
+    setFuture(futureRes.data ?? []);
+    setLoadingFuture(false);
   }, []);
 
   useEffect(() => {
@@ -77,6 +105,7 @@ export function DataQuality() {
   };
 
   return (
+    <div className="space-y-6">
     <Panel>
       <header className="flex items-center justify-between gap-3 border-b px-5 py-4">
         <div className="flex items-center gap-2">
@@ -133,5 +162,64 @@ export function DataQuality() {
         </ul>
       )}
     </Panel>
+
+    <Panel>
+      <header className="flex items-center justify-between gap-3 border-b px-5 py-4">
+        <div className="flex items-center gap-2">
+          <CalendarClockIcon className="size-4 text-muted-foreground" />
+          <div>
+            <h3 className="text-base font-semibold text-foreground">Future-dated payments</h3>
+            <p className="text-xs text-muted-foreground">
+              Payments dated after today — usually a data-entry slip that pushes coverage forward.
+            </p>
+          </div>
+        </div>
+        <Badge variant={future.length ? "secondary" : "outline"}>
+          {loadingFuture ? "…" : `${future.length} payment${future.length === 1 ? "" : "s"}`}
+        </Badge>
+      </header>
+
+      {loadingFuture ? (
+        <div className="flex items-center justify-center gap-2 p-10 text-sm text-muted-foreground">
+          <Loader2Icon className="size-4 animate-spin" /> Checking payments…
+        </div>
+      ) : future.length === 0 ? (
+        <div className="flex flex-col items-center gap-2 p-10 text-center">
+          <CheckCircle2Icon className="size-8 text-emerald-500" />
+          <p className="text-sm font-medium text-foreground">No future-dated payments</p>
+          <p className="text-xs text-muted-foreground">Every payment is dated today or earlier.</p>
+        </div>
+      ) : (
+        <ul className="divide-y">
+          {future.map((p) => {
+            const name = p.students?.full_name ?? "—";
+            const propName = p.students?.rooms?.properties?.name ?? "—";
+            const roomName = p.students?.rooms?.room_number ?? "—";
+            return (
+              <li key={p.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3.5">
+                <div className="min-w-44 flex-1">
+                  <div className="text-sm font-medium text-foreground">{name}</div>
+                  <div className="text-xs text-muted-foreground">{propName} · {roomName}</div>
+                </div>
+                <div className="text-xs font-semibold text-blue-600 dark:text-blue-400">
+                  Dated {p.payment_date}
+                </div>
+                <div className="min-w-20 text-right text-sm font-semibold tabular-nums text-foreground">
+                  {money(p.amount)}
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => openTenant(p.student_id)}
+                >
+                  Review tenant
+                </Button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </Panel>
+    </div>
   );
 }

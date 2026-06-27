@@ -127,6 +127,7 @@ function EditPaymentSheet({
   const [receipt, setReceipt] = useState(payment.receipt || "");
   const [notes, setNotes] = useState(payment.notes || "");
   const [saving, setSaving] = useState(false);
+  const [confirmFuture, setConfirmFuture] = useState(false);
 
   // Re-seed from the row each time the sheet opens.
   useEffect(() => {
@@ -137,11 +138,16 @@ function EditPaymentSheet({
       setReceipt(payment.receipt || "");
       setNotes(payment.notes || "");
       setSaving(false);
+      setConfirmFuture(false);
     }
   }, [open, payment]);
 
   const amountNum = Number(amount);
-  const canSubmit = Number.isFinite(amountNum) && amountNum > 0 && !!date && !saving;
+  // Same future-date guard as the record sheet — a future payment_date pushes
+  // coverage forward and is almost always a slip; require explicit confirmation.
+  const isFuture = !!date && date > todayISO();
+  const canSubmit =
+    Number.isFinite(amountNum) && amountNum > 0 && !!date && (!isFuture || confirmFuture) && !saving;
   // Existing seed data may carry methods (EcoCash/Zipit) outside the current list.
   const methodOptions = METHODS.includes(method) ? METHODS : [method, ...METHODS];
 
@@ -194,6 +200,26 @@ function EditPaymentSheet({
                 value={date} onChange={(e) => setDate(e.target.value)} />
             </div>
           </div>
+
+          {isFuture && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs dark:border-amber-700/60 dark:bg-amber-900/20">
+              <p className="font-medium text-amber-800 dark:text-amber-300">
+                This payment is dated in the future ({date}).
+              </p>
+              <p className="mt-0.5 text-amber-700/90 dark:text-amber-400/90">
+                A future date pushes coverage forward and is usually a data-entry mistake.
+              </p>
+              <label className="mt-2 flex items-center gap-2 font-medium text-amber-800 dark:text-amber-300">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-amber-600"
+                  checked={confirmFuture}
+                  onChange={(e) => setConfirmFuture(e.target.checked)}
+                />
+                Yes, this future date is intentional.
+              </label>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="ep-method">Method</Label>

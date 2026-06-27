@@ -78,6 +78,7 @@ export function RecordPaymentSheet({
   const [receipt, setReceipt]     = useState<string>("");
   const [notes, setNotes]         = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
+  const [confirmFuture, setConfirmFuture] = useState(false);
 
   // Reset form whenever the sheet re-opens so we don't carry stale state.
   useEffect(() => {
@@ -89,16 +90,21 @@ export function RecordPaymentSheet({
       setReceipt("");
       setNotes("");
       setSubmitting(false);
+      setConfirmFuture(false);
     }
   }, [open, defaultStudentId]);
 
   const selectedTenant = tenants.find((t) => t.id === studentId) ?? null;
   const amountNum = Number(amount);
+  // Guard: a future payment date silently pushes coverage forward — almost always a
+  // data-entry slip. Require an explicit confirm before it can be submitted.
+  const isFuture = !!date && date > todayISO();
   const canSubmit =
     !!studentId &&
     Number.isFinite(amountNum) &&
     amountNum > 0 &&
     !!date &&
+    (!isFuture || confirmFuture) &&
     !submitting;
 
   const handleSubmit = async () => {
@@ -225,6 +231,26 @@ export function RecordPaymentSheet({
               />
             </div>
           </div>
+
+          {isFuture && (
+            <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-xs dark:border-amber-700/60 dark:bg-amber-900/20">
+              <p className="font-medium text-amber-800 dark:text-amber-300">
+                This payment is dated in the future ({date}).
+              </p>
+              <p className="mt-0.5 text-amber-700/90 dark:text-amber-400/90">
+                A future date pushes coverage forward and is usually a data-entry mistake.
+              </p>
+              <label className="mt-2 flex items-center gap-2 font-medium text-amber-800 dark:text-amber-300">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-amber-600"
+                  checked={confirmFuture}
+                  onChange={(e) => setConfirmFuture(e.target.checked)}
+                />
+                Yes, this future date is intentional.
+              </label>
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="rp-method">Method</Label>
