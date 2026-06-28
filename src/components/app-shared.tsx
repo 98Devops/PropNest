@@ -7,8 +7,6 @@ import {
   BarChart3Icon,
   CalendarDaysIcon,
   SettingsIcon,
-  HelpCircleIcon,
-  BookOpenIcon,
 } from "lucide-react";
 import type { ScreenKey } from "@/lib/propnest-nav";
 import { ACTIVE_LABELS } from "@/lib/vertical-labels";
@@ -53,10 +51,9 @@ export const navGroups: SidebarNavGroup[] = [
   },
 ];
 
-export const footerNavLinks: SidebarNavItem[] = [
-  { title: "Help Center",   path: "#help",          icon: <HelpCircleIcon /> },
-  { title: "Documentation", path: "#documentation", icon: <BookOpenIcon /> },
-];
+// No template "Help Center" / "Documentation" placeholders — this is Trevis's
+// real system. Kept as an (empty) export so navLinks below stays valid.
+export const footerNavLinks: SidebarNavItem[] = [];
 
 export const navLinks: SidebarNavItem[] = [
   ...navGroups.flatMap((group) =>

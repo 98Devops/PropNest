@@ -4,7 +4,7 @@ import { DeltaPill } from "./delta-pill";
 import { MonthlyTrend } from "./monthly-trend";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, ExternalLinkIcon } from "lucide-react";
+import { Download } from "lucide-react";
 import { money, moneyCompact } from "./fmt";
 import { usePortfolio } from "./use-portfolio";
 import { DataQuality } from "./data-quality";
@@ -57,11 +57,6 @@ export function Reports() {
         <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" onClick={exportMonthlyCsv}>
             <Download /> Monthly CSV
-          </Button>
-          <Button asChild variant="outline">
-            <a href={`${window.location.pathname}?legacy=1#reports`} target="_self">
-              <ExternalLinkIcon /> Open full reports (legacy)
-            </a>
           </Button>
         </div>
       </header>
