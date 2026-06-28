@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeftIcon, BedSingleIcon, Download, PlusIcon, SearchIcon, UserPlusIcon } from "lucide-react";
+import { ArrowLeftIcon, BedSingleIcon, Download, PencilIcon, PlusIcon, SearchIcon, UserPlusIcon } from "lucide-react";
 import { money, moneyCompact } from "./fmt";
 import { RoomRow } from "./room-row";
 import { Panel } from "./panel";
@@ -11,8 +11,9 @@ import { usePortfolioCoverage, usePortfolioAttention, type PortfolioRow } from "
 import { RecordPaymentSheet } from "./modals/record-payment-sheet";
 import { AddTenantSheet } from "./modals/add-tenant-sheet";
 import { AddRoomSheet } from "./modals/add-room-sheet";
+import { EditPropertySheet } from "./modals/edit-property-sheet";
 import { useLabels } from "@/lib/vertical-labels";
-import { useAuth } from "@/parts/p1_imports_context.jsx";
+import { useData, useAuth } from "@/parts/p1_imports_context.jsx";
 import { downloadCsv, slug, timestamp } from "@/lib/csv";
 import { toast } from "sonner";
 
@@ -27,7 +28,9 @@ export function PropertyDetail({
   const [payOpen, setPayOpen] = useState(false);
   const [addTenantOpen, setAddTenantOpen] = useState(false);
   const [addRoomOpen, setAddRoomOpen] = useState(false);
-  const { coverageMap, loading: coverageLoading } = usePortfolioCoverage();
+  const [editOpen, setEditOpen] = useState(false);
+  const { coverageMap, loading: coverageLoading, refresh: refreshCoverage } = usePortfolioCoverage();
+  const { refresh: refreshData } = useData() as unknown as { refresh: () => void };
   const { rows: attentionRows } = usePortfolioAttention();
   const labels = useLabels();
   const auth = useAuth() as unknown as { user?: { role?: string } | null } | null;
@@ -107,6 +110,11 @@ export function PropertyDetail({
             <Download /> Export CSV
           </Button>
           {isAdmin && (
+            <Button variant="outline" onClick={() => setEditOpen(true)}>
+              <PencilIcon /> Edit property
+            </Button>
+          )}
+          {isAdmin && (
             <Button variant="outline" onClick={() => setAddRoomOpen(true)}>
               <BedSingleIcon /> Add {labels.unit.toLowerCase()}
             </Button>
@@ -135,6 +143,17 @@ export function PropertyDetail({
           open={addRoomOpen}
           onOpenChange={setAddRoomOpen}
           property={property}
+        />
+      )}
+      {isAdmin && (
+        <EditPropertySheet
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          property={{ id: property.id, name: property.name, location: property.location }}
+          onSaved={() => {
+            refreshData();
+            refreshCoverage();
+          }}
         />
       )}
 

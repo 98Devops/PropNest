@@ -50,6 +50,44 @@ export async function getPropertyById(id) {
   return { data, error };
 }
 
+/**
+ * Update a property's editable display fields (name, location).
+ *
+ * The property name/location are NOT coverage truth inputs — the engine keys off
+ * payments, rooms.rent_per_bed, and students.status, never the property name — so
+ * a rename can never change any tenant's balance, coverage, or status. No rebuild,
+ * no migration: it's a pure label change. We allow ONLY name/location through, so
+ * this can never accidentally write a structural/coverage column.
+ *
+ * @param {string} propertyId
+ * @param {{ name?: string, location?: string }} updates
+ * @returns {Promise<{ data: object|null, error: object|null }>}
+ */
+export async function updateProperty(propertyId, updates) {
+  if (!isConfigured) return { data: null, error: { message: 'Not configured' } };
+
+  const allowed = {};
+  if (typeof updates.name === 'string') {
+    const name = updates.name.trim();
+    if (!name) return { data: null, error: { message: 'Property name cannot be empty.' } };
+    allowed.name = name;
+  }
+  if (typeof updates.location === 'string') {
+    allowed.location = updates.location.trim();
+  }
+  if (Object.keys(allowed).length === 0) {
+    return { data: null, error: { message: 'Nothing to update.' } };
+  }
+
+  const { data, error } = await supabase
+    .from('properties')
+    .update(allowed)
+    .eq('id', propertyId)
+    .select()
+    .single();
+  return { data, error };
+}
+
 export async function addRoom(propertyId, roomNumber, bedCapacity, rentPerBed, notes) {
   if (!isConfigured) return { data: null, error: { message: 'Not configured' } };
   const { data, error } = await supabase
