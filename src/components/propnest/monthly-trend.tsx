@@ -27,7 +27,10 @@ export function MonthlyTrend() {
           )}
         </div>
       </header>
-      <div className="h-64 w-full px-2 pt-4 pb-2">
+      {/* Inline height (not just the h-64 class) guarantees a non-zero height on
+          the very first paint, before the external CSS loads — which silences
+          Recharts' "width(-1)/height(-1)" warning on initial render. */}
+      <div className="w-full px-2 pt-4 pb-2" style={{ height: 256 }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={monthlyTrend} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
             <defs>
