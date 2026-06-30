@@ -190,6 +190,19 @@ function buildSendPairs() {
 
 async function sendEmail(html) {
   const pairs = buildSendPairs();
+  // Config check — prints set/MISSING only (never the values), so a misnamed or
+  // unset secret is obvious in the run log.
+  const seen = (v) => (v ? 'set' : 'MISSING');
+  console.log('Config:',
+    `RESEND_API_KEY=${seen(process.env.RESEND_API_KEY)}`,
+    `REPORT_TO_EMAIL=${seen(process.env.REPORT_TO_EMAIL)}`,
+    `RESEND_API_KEY_2=${seen(process.env.RESEND_API_KEY_2)}`,
+    `REPORT_TO_EMAIL_2=${seen(process.env.REPORT_TO_EMAIL_2)}`);
+  console.log(`Preparing to send to ${pairs.length} recipient(s).`);
+  if ((process.env.RESEND_API_KEY_2 || process.env.REPORT_TO_EMAIL_2) &&
+      !(process.env.RESEND_API_KEY_2 && process.env.REPORT_TO_EMAIL_2)) {
+    console.warn('⚠️  Second recipient is half-configured: BOTH RESEND_API_KEY_2 and REPORT_TO_EMAIL_2 must be set (exact names).');
+  }
   if (!pairs.length) {
     console.error('Skip email: set RESEND_API_KEY and REPORT_TO_EMAIL (and optionally RESEND_API_KEY_2 / REPORT_TO_EMAIL_2 for a second recipient).');
     return false;
@@ -228,7 +241,13 @@ async function main() {
   if (phone) console.log('Click-to-send WhatsApp:\n  https://wa.me/' + phone + '?text=' + encodeURIComponent(wa) + '\n');
 
   if (DRY) { console.log('(--dry-run: email NOT sent)'); return; }
-  await sendEmail(html);
+  const ok = await sendEmail(html);
+  if (!ok) {
+    // Turn the GitHub run RED so a rejected email is never hidden behind a
+    // green check again. The per-recipient reason is logged above.
+    console.error('One or more emails failed to send — see the errors above.');
+    process.exit(1);
+  }
 }
 
 main().catch((e) => { console.error('FATAL:', e); process.exit(1); });
