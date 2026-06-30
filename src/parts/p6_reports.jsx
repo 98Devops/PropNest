@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { T, font, fmt, Bar, Btn, Badge } from "./p2_helpers.jsx";
+import { useState } from "react";
+import { T, font, fmt, Bar, Btn } from "./p2_helpers.jsx";
 
 /* ═══════════════════════════════════════════════════════════
    REPORTS VIEW

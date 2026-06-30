@@ -3,7 +3,7 @@ import { T, font, Badge, InputField, SelectField, Btn, fmt, daysSince, daysColor
 import { supabase, isConfigured as sbConfigured } from "../lib/supabase";
 import { useAuth } from "./p1_imports_context.jsx";
 import InlineEditField from "../components/InlineEditField.jsx";
-import { getAvailableRooms, getAllAvailableRooms, executeTransfer, getTransferHistory } from "../services/transferService.js";
+import { getAvailableRooms, executeTransfer, getTransferHistory } from "../services/transferService.js";
 import { buildCoverageBreakdown } from "../services/coverageBreakdown.js";
 import { debug } from "../lib/debug.js";
 

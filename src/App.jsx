@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { AuthProvider, useAuth, DataProvider, useData, isConfigured, addRoomSvc, addStudentSvc, removeStudentSvc, recordPaymentSvc, getPaymentsByStudent, getDataFlags, saveMonthlySnapshot, getSnapshots, generateObligations, logReport, updateRoomNotes, removeRoom } from "./parts/p1_imports_context.jsx";
-import { T, font, globalCSS, fmt, buildProps } from "./parts/p2_helpers.jsx";
-import { LoginScreen, NotConfiguredScreen, AddStudentWizard, AddRoomModal, PaymentModal, StudentProfile } from "./parts/p3_modals.jsx";
+import { useAuth, useData, isConfigured, addRoomSvc, addStudentSvc, removeStudentSvc, getDataFlags, saveMonthlySnapshot, generateObligations, removeRoom } from "./parts/p1_imports_context.jsx";
+import { T, font, globalCSS, buildProps } from "./parts/p2_helpers.jsx";
+import { LoginScreen, AddStudentWizard, AddRoomModal, PaymentModal, StudentProfile } from "./parts/p3_modals.jsx";
 import { Dashboard } from "./parts/p4_dashboard.jsx";
 import { PropertyDetail, Students } from "./parts/p5_views.jsx";
 import { Reports } from "./parts/p6_reports.jsx";
