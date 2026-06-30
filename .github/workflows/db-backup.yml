@@ -1,0 +1,47 @@
+# TREVIS — Weekly Database Backup (runs from PropNest, the living repo)
+#
+# Every Sunday: a full pg_dump of the live Supabase database, stored as a
+# downloadable GitHub "artifact" (kept 90 days). Always a recent restore point.
+# Read-only — never writes to the DB.
+#
+# Free: runs on GitHub Actions, no Netlify, no deploy.
+#
+# REQUIRED REPO SECRET (Settings -> Secrets and variables -> Actions):
+#   SUPABASE_DB_URL = Session Pooler connection string (port 5432), e.g.
+#     postgresql://postgres.<ref>:<DB-PASSWORD>@aws-0-eu-west-1.pooler.supabase.com:5432/postgres
+#   (Supabase -> Project Settings -> Database -> Connection string -> "Session pooler".
+#    Same host you used for the manual backup.)
+#
+# RESTORE (locally, when ever needed):
+#   pg_restore --clean --if-exists --no-owner -d "<target-db-url>" trevis_backup_YYYY-MM-DD.dump
+
+name: Weekly Database Backup
+
+on:
+  schedule:
+    - cron: '23 1 * * 0'   # 01:23 UTC every Sunday (off-peak minute)
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump database (version-safe pg17 client via Docker)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "ERROR: SUPABASE_DB_URL secret is not set."; exit 1
+          fi
+          STAMP=$(date +%Y-%m-%d)
+          docker run --rm postgres:17 pg_dump "$SUPABASE_DB_URL" -Fc \
+            > "trevis_backup_${STAMP}.dump"
+          echo "BACKUP_FILE=trevis_backup_${STAMP}.dump" >> "$GITHUB_ENV"
+          ls -lh "trevis_backup_${STAMP}.dump"
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trevis-db-backup-${{ github.run_number }}
+          path: ${{ env.BACKUP_FILE }}
+          retention-days: 90

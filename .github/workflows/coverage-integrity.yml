@@ -1,0 +1,35 @@
+# Coverage Integrity Monitor (runs from PropNest, the living repo)
+#
+# Nightly read-only audit: replays the payment ledger for every ACTIVE student
+# and asserts the stored coverage cache still matches. Fails the run (red + email
+# from GitHub) if anything drifted, a coverage range is corrupt, or a student
+# would lose days. A money system should constantly prove it's healthy.
+#
+# NEVER writes — runs `--report` only (read-only); `--apply` is never used in CI.
+#
+# REQUIRED REPO SECRETS (Settings -> Secrets and variables -> Actions):
+#   SUPABASE_URL          https://<ref>.supabase.co
+#   SUPABASE_SERVICE_KEY  service_role key (bypasses RLS; read-only here)
+
+name: Coverage Integrity Monitor
+
+on:
+  schedule:
+    - cron: '0 2 * * *'    # 02:00 UTC daily
+  workflow_dispatch: {}
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Supabase client
+        run: npm install --no-save @supabase/supabase-js
+      - name: Run coverage integrity report (read-only)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: node scripts/replay_portfolio_coverage.mjs --report

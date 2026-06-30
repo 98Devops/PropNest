@@ -5,6 +5,7 @@ import { getProperties, addRoom as addRoomSvc } from "../services/propertyServic
 import { addStudent as addStudentSvc, removeStudent as removeStudentSvc, getDataFlags } from "../services/studentService";
 import { recordPayment as recordPaymentSvc, getPaymentsByStudent } from "../services/paymentService";
 import { debug, debugTime, debugTimeEnd } from "../lib/debug.js";
+import { withRetry } from "../lib/withRetry.js";
 
 /* ═══════════════════════════════════════════════════════════
    AUTH CONTEXT
@@ -26,12 +27,18 @@ export function AuthProvider({ children }) {
       try {
         debug('[PropNest] Loading user profile...');
         
-        // Demo allow-list. In the SaaS model this client-side gate is replaced
-        // by Supabase RLS + per-account membership (PropNest Phase 2).
+        // Staff allow-list — only these accounts may enter the UI shell.
+        // (RLS is the real data guard; this keeps the shell staff-only and
+        // blocks random Google sign-ups.) To add a staff member: add their
+        // exact login email here, rebuild, and redeploy.
+        // In the SaaS model this client-side gate is replaced by Supabase RLS
+        // + per-account membership (PropNest Phase 2).
         const ALLOWED_EMAILS = [
-          "admin@propnest.app",
-          "manager@propnest.app",
-          "tfrsuperfx@gmail.com"
+          "admin@propnest.app",     // demo
+          "manager@propnest.app",   // demo
+          "tfrsuperfx@gmail.com",   // owner / dev
+          "trevisdaradi@gmail.com", // Trevis (owner, ADMIN)
+          "daradit@africau.edu",    // Trevis (university email)
         ];
         
         const { data: { session } } = await supabase.auth.getSession();
@@ -129,7 +136,9 @@ export function DataProvider({ children }) {
     try {
       debugTime(`[Perf] ${timerId}`);
       debug('[PropNest] Fetching properties...');
-      const { data, error: err } = await getProperties();
+      // Retry transient failures (network blip) so the dashboard self-heals
+      // instead of flashing an error on first load. Read-only — safe to retry.
+      const { data, error: err } = await withRetry(() => getProperties());
       debugTimeEnd(`[Perf] ${timerId}`);
       debug('[PropNest] Properties:', data?.length, 'error:', err?.message);
       if (err) { setError(err.message); }
