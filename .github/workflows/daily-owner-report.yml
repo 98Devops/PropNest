@@ -44,5 +44,9 @@ jobs:
           REPORT_TO_EMAIL: ${{ secrets.REPORT_TO_EMAIL }}
           REPORT_CC_EMAIL: ${{ secrets.REPORT_CC_EMAIL }}
           REPORT_FROM_EMAIL: ${{ secrets.REPORT_FROM_EMAIL }}
+          # Second recipient (Trevis) via his own Resend account — no domain needed.
+          RESEND_API_KEY_2: ${{ secrets.RESEND_API_KEY_2 }}
+          REPORT_TO_EMAIL_2: ${{ secrets.REPORT_TO_EMAIL_2 }}
+          REPORT_FROM_EMAIL_2: ${{ secrets.REPORT_FROM_EMAIL_2 }}
           OWNER_WHATSAPP: ${{ secrets.OWNER_WHATSAPP }}
         run: node scripts/daily_owner_report.mjs
